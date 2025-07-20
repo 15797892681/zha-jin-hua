@@ -1,0 +1,173 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+## 项目信息
+- **语言**: Java
+- **框架**: Spring Boot
+- **Java版本**: 8
+
+## 技术栈
+- SpringMVC
+- SpringBoot
+- MyBatis-Plus
+- OpenFeign
+- Swagger
+- Apollo
+- Hystrix
+- Redis
+- RocketMQ
+- MySQL
+
+## 代码风格（Style）
+### 通用规范
+- **编码规约**：遵循《阿里巴巴Java开发手册（最新版）》
+- **缩进风格**：4 空格缩进
+
+### 命名规范
+| 类型 | 命名规则 |
+|------|----------|
+| 类名 | PascalCase |
+| 方法名 | camelCase |
+| 变量名 | camelCase |
+| 常量名 | UPPER_SNAKE_CASE |
+
+### 注释规范
+- 必须添加类注释、方法注释、参数和返回值说明
+- Service 方法注释需详尽说明用途、参数、返回值和可能异常
+
+### Controller 层
+- 只负责：参数校验、调用 Service、数据转换
+- 禁止直接调用 Mapper 层
+- 推荐使用 Swagger 注解进行接口文档生成
+
+### Service 层
+- Service 为接口类型，仅声明业务逻辑
+- ServiceImpl 位于 `impl` 包内，职责包括：业务编排、调用 Mapper、处理异常
+- 推荐单元逻辑封装，支持日志分级打印
+
+#### Service 日志等级
+- 业务异常：warn
+- 系统或外部异常：error
+
+### Repository 层
+- 存放 MyBatis-Plus 简单的 Lambda 查询/更新操作
+- 复杂 SQL 建议使用 XML 编写
+- 禁止在repoImpl中出现复杂的sql语句，如setSql等
+
+#### Repository 接口
+- 继承 `com.baomidou.mybatisplus.extension.service.IService`
+- 仅定义数据库操作接口，职责单一、方法命名清晰
+
+#### Repository 实现类 RepoImpl
+- 实现 Repository 接口
+- 继承 `com.baomidou.mybatisplus.extension.service.impl.ServiceImpl`
+- 使用构造注入 Mapper（`final` 成员属性）
+- 使用 @Slf4j 注解进行日志管理
+
+### Mapper 层
+- 使用 MyBatis-Plus
+- 所有 SQL 推荐写在 XML 中
+- 禁止使用注解 SQL
+- 所有查询默认过滤逻辑删除字段（`is_deleted = 0`）
+- 查询必须设置 limit 2000（除分页）
+
+### Entity 规范
+- 注解：@Builder、@AllArgsConstructor、@NoArgsConstructor、@Data
+- 所有字段必须添加注释
+- 允许使用 typeHandler
+- 每个字段添加@TableField
+
+## 工程结构层级
+```
+controller
+service
+service.impl
+repository
+repository.impl
+mapper
+mapper.xml
+```
+
+## 各层命名规范
+| 层 | 后缀 |
+|----|------|
+| Controller | Controller |
+| Service 接口 | Service |
+| Service 实现 | ServiceImpl |
+| Repository 接口 | Repo |
+| Repository 实现 | RepoImpl |
+| Mapper 接口 | Mapper |
+| 实体类 | Entity |
+
+## 领域模型规范
+### 枚举
+- 必须包含 code 和 desc 字段
+
+### DTO
+- 使用 Swagger 注解
+
+### 异常处理
+- 使用统一业务异常类：`cn.codemao.cloud.core.common.exception.BaseBizException`
+- Feign 接口建议使用 Hystrix 或 Sentinel 的 `fallbackFactory`
+
+## 定时任务
+- 使用 Xxl-Job 来实现定时任务
+
+## 性能规范
+- 接口响应时间阈值：< 200ms
+- 最大重试次数：3
+- 所有 List 查询必须分页
+- 所有查询需配置最大返回条数（如：limit）
+
+## 日志打印
+### 必须要打印日志的位置
+
+- 所有 Controller 层方法的输入输出必须打印日志
+- 调用 Feign 接口的输入输出必须打印日志
+- Feign 接口实现类的输入输出必须打印日志
+- 消息的生产和消费必须打印日志
+- 异常场景必须记录日志
+
+### 日志级别说明
+
+- **warn**：用于业务异常（如参数错误、状态错误）
+- **error**：系统级别或外部调用异常才使用
+
+## 时间处理
+
+- 除时间戳外，时间处理总是应该使用 `java.time.LocalDate` 和 `java.time.LocalDateTime`
+- 在 Java 代码中，在创建或者操作时间类时，时区一定要设置成东八区
+
+## Swagger 规范
+- 项目必须启用 Swagger
+- 所有接口添加 Swagger 注解说明
+
+## 重构建议
+- 优先使用已有代码/模块，不重复造轮子
+- 出入参使用 DTO，避免直接使用 Entity
+- Entity 字段默认值需考虑历史数据兼容
+
+## 自我检查项（生成代码后必须执行）
+- 是否满足核心业务需求（流程完整、逻辑清晰、边界合理）
+- 是否满足性能要求（是否分页、缓存优化、接口耗时）
+- 是否符合命名规范、结构清晰
+- 是否已使用可复用模块/函数
+- 是否缺失 Swagger 注解、参数校验逻辑
+- 是否有逻辑 bug
+- 所有 SQL 查询是否包含 limit
+- 是否已将复杂 SQL 编写在 XML
+- 是否符合 MyBatis-Plus 使用规范（禁止使用 @Select 等）
+- 不得出现"根据实际字段补充完整"、"其他字段映射"、"业务实现"等省略表达
+
+## 附加说明
+- 所有出入参 DTO 字段必须添加 Swagger 注解
+- Spring 注入推荐构造器注入（@RequiredArgsConstructor + final 属性）
+- 实体类需考虑历史数据，默认值使用需谨慎
+- 所有 SQL 查询应默认过滤逻辑删除（`is_deleted = 0`）
+- 除严重异常外，禁止使用 error 日志级别
+- Mapper 查询需带 limit，避免全表扫描
+- repository 层应统一管理 Lambda 查询/更新逻辑
+- 用户有的时候会让你根据表结构来生成代码，这时你需要参考 ai-knowledge-base/baseCode.md 中的规范来生成文件，并输出完整的代码
+- 可以参考 ai-knowledge-base/base.md 中的内容，这个文件里面包含一些这个项目的常用的一些方法或者表定义

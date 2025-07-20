@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lin.web.mapper.DingTalkSendMessageMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.lin.web.entity.DingTalkSendMessage">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="msg" property="msg" jdbcType="VARCHAR"/>
+        <result column="msg_key" property="msgKey" jdbcType="VARCHAR"/>
+        <result column="agent_id" property="agentId" jdbcType="VARCHAR"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, msg, msg_key, agent_id, user_id, created_at, updated_at
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tbl_ding_talk_send_message
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据用户ID查询 -->
+    <select id="selectByUserId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tbl_ding_talk_send_message
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 根据应用ID和用户ID查询 -->
+    <select id="selectByAgentIdAndUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tbl_ding_talk_send_message
+        WHERE agent_id = #{agentId} AND user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 根据消息key查询 -->
+    <select id="selectByMsgKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tbl_ding_talk_send_message
+        WHERE msg_key = #{msgKey}
+    </select>
+
+    <!-- 查询所有消息 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM tbl_ding_talk_send_message
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 更新消息 -->
+    <update id="update" parameterType="com.lin.web.entity.DingTalkSendMessage">
+        UPDATE tbl_ding_talk_send_message
+        SET msg = #{msg},
+            msg_key = #{msgKey},
+            agent_id = #{agentId},
+            user_id = #{userId},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID删除 -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM tbl_ding_talk_send_message
+        WHERE id = #{id}
+    </delete>
+
+    <!-- 根据用户ID删除 -->
+    <delete id="deleteByUserId" parameterType="java.lang.Long">
+        DELETE FROM tbl_ding_talk_send_message
+        WHERE user_id = #{userId}
+    </delete>
+
+</mapper> 
