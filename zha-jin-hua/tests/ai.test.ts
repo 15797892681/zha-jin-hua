@@ -59,6 +59,14 @@ describe('chooseAiAction', () => {
     expect(first).toEqual(second);
   });
 
+  it('forces a comparison after a long round so AI games always terminate', () => {
+    const state = fixture('8S 8H KD');
+    state.players[0].hasLooked = true;
+    state.actionCount = state.players.length * 4;
+
+    expect(chooseAiAction(state, 'bot', 'cautious', () => 0).type).toBe('compare');
+  });
+
   it('rejects attempts to choose for a player who is not acting', () => {
     expect(() => chooseAiAction(fixture(), 'p2', 'bold', () => 0)).toThrowError('AI_NOT_ACTING');
   });

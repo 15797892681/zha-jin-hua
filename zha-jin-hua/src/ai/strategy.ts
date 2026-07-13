@@ -76,6 +76,13 @@ export function chooseAiAction(
   const actions = legalActions(state, playerId);
   const randomValue = Math.min(0.999_999, Math.max(0, random()));
 
+  if (
+    state.actionCount >= state.players.length * 4
+    && actions.compareTargets.length > 0
+  ) {
+    return compareAction(state, playerId, actions.compareTargets[0]);
+  }
+
   if (style === 'chaotic') {
     return chooseChaotic(state, playerId, actions, randomValue);
   }

@@ -7,6 +7,7 @@ type Listener = (...args: unknown[]) => void;
 
 export interface OnlineSocket {
   connected: boolean;
+  connect(): OnlineSocket;
   on(event: string, listener: Listener): OnlineSocket;
   off(event: string, listener: Listener): OnlineSocket;
   emit(event: string, payload: unknown, ack?: (response: unknown) => void): OnlineSocket;
@@ -101,7 +102,11 @@ export function useOnlineGame(socketFactory: SocketFactory): OnlineController {
     socket.on('room:snapshot', onRoom);
     socket.on('game:snapshot', onGame);
     socket.on('request:error', onRequestError);
-    if (socket.connected) onConnect();
+    if (socket.connected) {
+      onConnect();
+    } else {
+      socket.connect();
+    }
 
     return () => {
       socket.off('connect', onConnect);

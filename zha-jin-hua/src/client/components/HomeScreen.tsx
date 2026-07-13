@@ -1,10 +1,14 @@
+import { SoundToggle } from './SoundToggle';
+
 interface HomeScreenProps {
   onSolo(): void;
   onOnline(): void;
   onRules(): void;
+  soundEnabled: boolean;
+  onToggleSound(): void;
 }
 
-export function HomeScreen({ onSolo, onOnline, onRules }: HomeScreenProps) {
+export function HomeScreen({ onSolo, onOnline, onRules, soundEnabled, onToggleSound }: HomeScreenProps) {
   return (
     <main className="home-screen">
       <div className="home-mark" aria-hidden="true">
@@ -29,6 +33,7 @@ export function HomeScreen({ onSolo, onOnline, onRules }: HomeScreenProps) {
         </button>
       </nav>
       <button className="text-button" type="button" onClick={onRules}>玩法规则</button>
+      <SoundToggle enabled={soundEnabled} onToggle={onToggleSound} />
       <p className="virtual-note">仅使用游戏内虚拟筹码</p>
     </main>
   );

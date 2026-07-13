@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -10,6 +11,7 @@ type Listener = (...args: unknown[]) => void;
 
 class FakeSocket implements OnlineSocket {
   connected = true;
+  connectCalls = 0;
   private listeners = new Map<string, Set<Listener>>();
   emitted: Array<{ event: string; payload: unknown }> = [];
   nextFailure: { code: string; message: string } | null = null;
@@ -44,6 +46,13 @@ class FakeSocket implements OnlineSocket {
 
   disconnect() {
     this.connected = false;
+  }
+
+  connect() {
+    this.connectCalls += 1;
+    this.connected = true;
+    this.serverEmit('connect');
+    return this;
   }
 
   serverEmit(event: string, payload?: unknown) {
@@ -132,5 +141,17 @@ describe('online lobby UI', () => {
 
     await user.click(await screen.findByRole('button', { name: '复制房间码' }));
     expect(writeText).toHaveBeenCalledWith('A7K9Q2');
+  });
+
+  it('reconnects after the StrictMode development remount', async () => {
+    const socket = new FakeSocket();
+    socket.connected = false;
+    const user = userEvent.setup();
+    render(<StrictMode><App socketFactory={() => socket} /></StrictMode>);
+
+    await user.click(screen.getByRole('button', { name: '联网房间' }));
+
+    expect(await screen.findByText('已连接')).toBeInTheDocument();
+    expect(socket.connectCalls).toBeGreaterThanOrEqual(2);
   });
 });

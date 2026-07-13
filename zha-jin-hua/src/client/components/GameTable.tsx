@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { GameAction, PlayerGameView } from '../../shared/types';
+import type { SoundCue } from '../game/useSound';
 import { ActionBar } from './ActionBar';
 import { PlayerSeat } from './PlayerSeat';
 import { RoundResult } from './RoundResult';
+import { SoundToggle } from './SoundToggle';
 
 interface GameTableProps {
   view: PlayerGameView;
@@ -14,6 +16,9 @@ interface GameTableProps {
   onExit(): void;
   connectionState?: 'online' | 'reconnecting' | 'offline';
   modeLabel?: string;
+  soundEnabled?: boolean;
+  onToggleSound?: () => void;
+  onSound?: (cue: SoundCue) => void;
 }
 
 function useRemainingSeconds(deadline: number | null): number | null {
@@ -38,14 +43,26 @@ export function GameTable({
   onExit,
   connectionState = 'online',
   modeLabel = '单机对战',
+  soundEnabled = false,
+  onToggleSound,
+  onSound,
 }: GameTableProps) {
   const remainingSeconds = useRemainingSeconds(view.turnDeadline);
+  const previousStatus = useRef(view.status);
+  useEffect(() => {
+    if (previousStatus.current === 'playing' && view.status === 'finished') onSound?.('win');
+    previousStatus.current = view.status;
+  }, [onSound, view.status]);
   const viewer = view.players.find((player) => player.id === viewerId);
   if (!viewer) {
     throw new Error('找不到当前玩家');
   }
 
   const isTurn = view.status === 'playing' && view.currentPlayerId === viewerId && connectionState === 'online';
+  const handleAction = (action: GameAction) => {
+    onSound?.(action.type === 'look' ? 'flip' : 'chip');
+    onAction(action);
+  };
 
   return (
     <main className="game-screen">
@@ -55,7 +72,10 @@ export function GameTable({
           <span className="table-brand">金局</span>
           <small>{modeLabel}</small>
         </div>
-        <span className={`connection-pill is-${connectionState}`}>{connectionState === 'online' ? '牌桌顺畅' : '正在重连'}</span>
+        <div className="table-tools">
+          {onToggleSound && <SoundToggle enabled={soundEnabled} onToggle={onToggleSound} />}
+          <span className={`connection-pill is-${connectionState}`}>{connectionState === 'online' ? '牌桌顺畅' : '正在重连'}</span>
+        </div>
       </header>
       <section className="felt-table" aria-label="炸金花牌桌">
         <div className="table-ring" aria-hidden="true" />
@@ -97,7 +117,7 @@ export function GameTable({
           isTurn={isTurn}
           actions={view.legalActions}
           opponents={view.players.filter((player) => player.id !== viewerId)}
-          onAction={onAction}
+          onAction={handleAction}
         />
       )}
       {view.status === 'finished' && <RoundResult view={view} onNextRound={onNextRound} onReset={onReset} />}
