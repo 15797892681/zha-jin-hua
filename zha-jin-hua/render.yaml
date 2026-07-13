@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: zha-jin-hua
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: zha-jin-hua
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: 22.17.0

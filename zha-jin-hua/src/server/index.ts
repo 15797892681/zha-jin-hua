@@ -1,4 +1,6 @@
 import { createServer, type Server as HttpServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import express, { type Express } from 'express';
@@ -16,13 +18,23 @@ export interface GameServer {
   stop(): Promise<void>;
 }
 
-export function createGameServer(): GameServer {
+export interface GameServerOptions {
+  clientRoot?: string;
+}
+
+export function createGameServer(options: GameServerOptions = {}): GameServer {
   const app = express();
   const httpServer = createServer(app);
   const io = new SocketServer(httpServer, { cors: { origin: true, credentials: true } });
   const rooms = new RoomManager();
+  const clientRoot = options.clientRoot ?? resolve(process.cwd(), 'dist/client');
 
   app.get('/healthz', (_request, response) => response.json({ ok: true }));
+  app.use(express.static(clientRoot));
+  app.get('/{*splat}', async (_request, response) => {
+    const html = await readFile(resolve(clientRoot, 'index.html'), 'utf8');
+    response.type('html').send(html);
+  });
   registerSocketHandlers(io, rooms);
 
   return {
@@ -33,7 +45,7 @@ export function createGameServer(): GameServer {
     start(port) {
       return new Promise((resolve, reject) => {
         httpServer.once('error', reject);
-        httpServer.listen(port, '127.0.0.1', () => {
+        httpServer.listen(port, '0.0.0.0', () => {
           httpServer.off('error', reject);
           resolve();
         });
@@ -52,6 +64,6 @@ if (isMain) {
   const server = createGameServer();
   const port = Number(process.env.PORT ?? 3001);
   server.start(port).then(() => {
-    console.log(`金局服务已启动：http://127.0.0.1:${port}`);
+    console.log(`金局服务已启动：http://0.0.0.0:${port}`);
   });
 }
