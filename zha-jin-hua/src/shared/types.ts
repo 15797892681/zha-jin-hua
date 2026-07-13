@@ -96,3 +96,21 @@ export interface PlayerGameView extends Omit<GameState, 'players' | 'deck'> {
   players: PlayerViewPlayer[];
   legalActions: LegalActions;
 }
+
+export type RoomStatus = 'waiting' | 'playing' | 'result';
+
+export interface RoomPlayerSnapshot {
+  id: string;
+  nickname: string;
+  chips: number;
+  connected: boolean;
+  isHost: boolean;
+  disconnectDeadline: number | null;
+}
+
+export interface RoomSnapshot {
+  code: string;
+  hostId: string;
+  status: RoomStatus;
+  players: RoomPlayerSnapshot[];
+}
