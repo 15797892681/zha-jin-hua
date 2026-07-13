@@ -1,0 +1,46 @@
+zha-jin-hua/src/client/main.tsx
+  s_ba9c66153bd67c::t_6f4cb95f65bf90 1-16
+zha-jin-hua/src/client/components/PlayingCard.tsx
+  s_ba9c66153bd67c::t_6f4cb95f65bf90 1-35
+zha-jin-hua/src/client/components/RoundResult.tsx
+  s_ba9c66153bd67c::t_6f4cb95f65bf90 1-47
+zha-jin-hua/src/client/styles.css
+  s_ba9c66153bd67c::t_6f4cb95f65bf90 1-271
+zha-jin-hua/src/client/components/GameTable.tsx
+  s_ba9c66153bd67c::t_6f4cb95f65bf90 1-83
+zha-jin-hua/src/client/App.tsx
+  s_ba9c66153bd67c::t_6f4cb95f65bf90 1-51
+zha-jin-hua/src/test/setup.ts
+  s_ba9c66153bd67c::t_7710d87d6df752 2-5
+zha-jin-hua/tests/solo-ui.test.tsx
+  s_ba9c66153bd67c::t_7125731e1d0da2 1-42
+zha-jin-hua/src/client/components/HomeScreen.tsx
+  s_ba9c66153bd67c::t_6f4cb95f65bf90 1-19,21-24,26-35
+  s_ba9c66153bd67c::t_7710d87d6df752 20,25
+zha-jin-hua/src/client/components/RaiseSheet.tsx
+  s_ba9c66153bd67c::t_6f4cb95f65bf90 1-27
+zha-jin-hua/src/client/game/useSoloGame.ts
+  s_ba9c66153bd67c::t_6f4cb95f65bf90 1-97
+zha-jin-hua/src/client/components/ActionBar.tsx
+  s_ba9c66153bd67c::t_6f4cb95f65bf90 1-74
+zha-jin-hua/src/client/components/RulesDialog.tsx
+  s_ba9c66153bd67c::t_6f4cb95f65bf90 1-24
+zha-jin-hua/src/client/components/PlayerSeat.tsx
+  s_ba9c66153bd67c::t_6f4cb95f65bf90 1-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "028d1822321d6d1c3bf63371c613a1815bc351e1",
+  "prompts": {},
+  "sessions": {
+    "s_ba9c66153bd67c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f5a79-a8f1-7f90-8210-dbd8d97a9a15",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "linruibiao <linruibiao@codemao.cn>"
+    }
+  }
+}
