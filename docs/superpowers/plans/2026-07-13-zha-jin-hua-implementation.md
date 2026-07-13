@@ -86,7 +86,7 @@
 }
 ```
 
-Run: `cd zha-jin-hua && npm install react@19 react-dom@19 express@5 socket.io@4 socket.io-client@4 zod@4 && npm install -D typescript@5 vite@7 @vitejs/plugin-react@latest vitest@3 jsdom@latest @testing-library/react@latest @testing-library/user-event@latest @testing-library/jest-dom@latest @types/react@19 @types/react-dom@19 @types/express@5 tsx@latest tsup@latest concurrently@latest @playwright/test@latest`
+Run: `cd zha-jin-hua && npm install react@19 react-dom@19 express@5 socket.io@4 socket.io-client@4 zod@4 && npm install -D typescript@5 vite@7 @vitejs/plugin-react@5.2.0 vitest@3 jsdom@latest @testing-library/react@latest @testing-library/user-event@latest @testing-library/jest-dom@latest @types/react@19 @types/react-dom@19 @types/express@5 tsx@latest tsup@latest concurrently@latest @playwright/test@1.59.1`
 
 Expected: `package-lock.json` is created and npm exits with code 0.
 
