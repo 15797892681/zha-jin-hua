@@ -1,0 +1,35 @@
+zha-jin-hua/src/client/components/GameTable.tsx
+  s_ba9c66153bd67c::t_6d81e158224b0b 14,25,40
+zha-jin-hua/src/client/online/OnlineMode.tsx
+  s_ba9c66153bd67c::t_6d81e158224b0b 1-55
+zha-jin-hua/tests/online-ui.test.tsx
+  s_ba9c66153bd67c::t_8d970a299c362f 1-82,85-116,118-125,127-132,134-136
+  s_ba9c66153bd67c::t_635a4572550b03 126
+  s_ba9c66153bd67c::t_6de6b5118dcfd3 83-84,117,133
+zha-jin-hua/src/client/components/OnlineLobby.tsx
+  s_ba9c66153bd67c::t_6d81e158224b0b 1-53
+zha-jin-hua/src/client/App.tsx
+  s_ba9c66153bd67c::t_6d81e158224b0b 7-8,10,12-16,34-35,42
+zha-jin-hua/src/client/online/useOnlineGame.ts
+  s_ba9c66153bd67c::t_6d81e158224b0b 1-174
+zha-jin-hua/src/client/styles.css
+  s_ba9c66153bd67c::t_6d81e158224b0b 221-250,297-302
+zha-jin-hua/src/client/components/WaitingRoom.tsx
+  s_ba9c66153bd67c::t_6d81e158224b0b 1-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "7626af89f565e75fffbe3c2e37298221a2d581ee",
+  "prompts": {},
+  "sessions": {
+    "s_ba9c66153bd67c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f5a79-a8f1-7f90-8210-dbd8d97a9a15",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "linruibiao <linruibiao@codemao.cn>"
+    }
+  }
+}
