@@ -1,0 +1,34 @@
+zha-jin-hua/src/server/index.ts
+  s_ba9c66153bd67c::t_39353972c1d551 1-56
+zha-jin-hua/src/shared/types.ts
+  s_ba9c66153bd67c::t_39353972c1d551 99-116
+zha-jin-hua/src/server/socket.ts
+  s_ba9c66153bd67c::t_39353972c1d551 1-182
+zha-jin-hua/src/server/rooms.ts
+  s_ba9c66153bd67c::t_39353972c1d551 1-278
+zha-jin-hua/tests/socket.test.ts
+  s_ba9c66153bd67c::t_42eb02dc9cc7f1 3-21,34-106,112-118
+  s_ba9c66153bd67c::t_663c81eeea46b9 22-33,107-111
+  s_ba9c66153bd67c::t_39353972c1d551 1-2
+zha-jin-hua/tests/rooms.test.ts
+  s_ba9c66153bd67c::t_42eb02dc9cc7f1 3-72
+  s_ba9c66153bd67c::t_39353972c1d551 1-2
+zha-jin-hua/src/server/protocol.ts
+  s_ba9c66153bd67c::t_39353972c1d551 1-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "7bb604fb233697b1f73d719b7bff23737488997e",
+  "prompts": {},
+  "sessions": {
+    "s_ba9c66153bd67c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f5a79-a8f1-7f90-8210-dbd8d97a9a15",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "linruibiao <linruibiao@codemao.cn>"
+    }
+  }
+}
