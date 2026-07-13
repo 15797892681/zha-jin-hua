@@ -22,3 +22,77 @@ export interface HandValue {
   categoryScore: number;
   tieBreakers: number[];
 }
+
+export interface GamePlayerInput {
+  id: string;
+  name: string;
+  chips?: number;
+}
+
+export interface GameConfig {
+  players: GamePlayerInput[];
+  startingChips: number;
+  ante: number;
+  random?: () => number;
+  deck?: Card[];
+}
+
+export type PlayerStatus = 'active' | 'folded' | 'out';
+export type GameStatus = 'playing' | 'finished';
+
+export interface GamePlayer {
+  id: string;
+  name: string;
+  chips: number;
+  cards: Card[];
+  hasLooked: boolean;
+  status: PlayerStatus;
+  roundContribution: number;
+}
+
+export type GameAction =
+  | { type: 'look'; playerId: string; turnId: number }
+  | { type: 'call'; playerId: string; turnId: number }
+  | { type: 'raise'; playerId: string; amount: number; turnId: number }
+  | { type: 'fold'; playerId: string; turnId: number }
+  | { type: 'compare'; playerId: string; targetId: string; turnId: number };
+
+export interface LastAction {
+  type: GameAction['type'];
+  playerId: string;
+  amount?: number;
+  targetId?: string;
+  loserId?: string;
+}
+
+export interface LegalActions {
+  canLook: boolean;
+  callCost: number | null;
+  raiseAmounts: number[];
+  compareCost: number | null;
+  compareTargets: string[];
+  canFold: boolean;
+}
+
+export interface GameState {
+  status: GameStatus;
+  players: GamePlayer[];
+  deck: Card[];
+  pot: number;
+  ante: number;
+  baseBet: number;
+  currentPlayerId: string | null;
+  turnId: number;
+  actionCount: number;
+  winnerIds: string[];
+  lastAction: LastAction | null;
+}
+
+export interface PlayerViewPlayer extends Omit<GamePlayer, 'cards'> {
+  cards: Array<Card | null>;
+}
+
+export interface PlayerGameView extends Omit<GameState, 'players' | 'deck'> {
+  players: PlayerViewPlayer[];
+  legalActions: LegalActions;
+}
