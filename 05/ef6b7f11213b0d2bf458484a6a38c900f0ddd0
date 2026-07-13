@@ -1,0 +1,53 @@
+zha-jin-hua/vite.config.ts
+  s_ba9c66153bd67c::t_d8d1e5b8401e83 20
+zha-jin-hua/tests/ai.test.ts
+  s_ba9c66153bd67c::t_cb170ef87bdd14 62-69
+zha-jin-hua/src/client/components/SoundToggle.tsx
+  s_ba9c66153bd67c::t_835f580fe4bc32 1-13
+zha-jin-hua/tests/sound-ui.test.tsx
+  s_ba9c66153bd67c::t_f7b2f6e4f29a79 1-22
+zha-jin-hua/src/client/styles.css
+  s_ba9c66153bd67c::t_835f580fe4bc32 104-105,115,272
+zha-jin-hua/src/client/components/HomeScreen.tsx
+  s_ba9c66153bd67c::t_83fbce2780d4de 1-2
+  s_ba9c66153bd67c::t_835f580fe4bc32 7-8,11,36
+zha-jin-hua/src/client/components/GameTable.tsx
+  s_ba9c66153bd67c::t_835f580fe4bc32 1,4,8,19-21,46-48,51-55,62-65,75-78,120
+zha-jin-hua/playwright.config.ts
+  s_ba9c66153bd67c::t_c0d06840f2f370 1-27
+zha-jin-hua/src/client/App.tsx
+  s_ba9c66153bd67c::t_835f580fe4bc32 7,21,32-34,40,49-50
+zha-jin-hua/src/client/game/useSound.ts
+  s_ba9c66153bd67c::t_835f580fe4bc32 1-64
+zha-jin-hua/src/client/online/OnlineMode.tsx
+  s_ba9c66153bd67c::t_835f580fe4bc32 4,10,13,55-57
+zha-jin-hua/e2e/solo.spec.ts
+  s_ba9c66153bd67c::t_c0d06840f2f370 1-14
+zha-jin-hua/src/ai/strategy.ts
+  s_ba9c66153bd67c::t_7ff58d0e8b96b5 79-85
+zha-jin-hua/e2e/online.spec.ts
+  s_ba9c66153bd67c::t_c0d06840f2f370 1-37
+zha-jin-hua/tests/online-ui.test.tsx
+  s_ba9c66153bd67c::t_f2c8d0563341c3 1,14,51-57,145-155
+  s_ba9c66153bd67c::t_ec1a9f26fb5f9d 156
+zha-jin-hua/src/client/online/useOnlineGame.ts
+  s_ba9c66153bd67c::t_a3bccb9b26a8f9 10,105-109
+zha-jin-hua/e2e/responsive.spec.ts
+  s_ba9c66153bd67c::t_c0d06840f2f370 1-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "05ef6b7f11213b0d2bf458484a6a38c900f0ddd0",
+  "prompts": {},
+  "sessions": {
+    "s_ba9c66153bd67c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f5a79-a8f1-7f90-8210-dbd8d97a9a15",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "linruibiao <linruibiao@codemao.cn>"
+    }
+  }
+}
