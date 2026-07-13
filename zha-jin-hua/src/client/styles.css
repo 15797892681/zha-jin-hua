@@ -218,6 +218,36 @@ button { -webkit-tap-highlight-color: transparent; }
 .preview-screen h1 { margin: 0; font: 700 54px/1.2 'Noto Serif SC', serif; }
 .preview-screen p:not(.eyebrow) { max-width: 420px; color: var(--ivory-muted); }
 
+.online-screen, .waiting-screen { min-height: 100dvh; background: var(--felt-950); }
+.online-header { height: 68px; display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(14px, 3vw, 36px); border-bottom: 1px solid var(--line); }
+.lobby-panel { width: min(520px, calc(100vw - 28px)); margin: clamp(40px, 8vh, 90px) auto; padding: clamp(24px, 5vw, 50px); background: var(--felt-900); border: 1px solid rgba(216, 173, 85, .35); }
+.lobby-panel h1, .waiting-content h1 { margin: 0; font: 700 clamp(38px, 7vw, 64px)/1.15 'Noto Serif SC', serif; }
+.lobby-intro { margin: 12px 0 28px; color: var(--ivory-muted); line-height: 1.7; }
+.field-label { display: grid; gap: 8px; margin-top: 16px; color: var(--ivory-muted); font-size: 12px; }
+.field-label input { width: 100%; min-height: 52px; padding: 0 14px; color: var(--ivory); background: rgba(246, 240, 223, .055); border: 1px solid var(--line); border-radius: 0; }
+.field-label input::placeholder { color: rgba(246, 240, 223, .3); }
+.room-code-field input { text-transform: uppercase; letter-spacing: .25em; font-weight: 700; }
+.lobby-primary, .lobby-secondary { width: 100%; min-height: 52px; margin-top: 14px; cursor: pointer; }
+.lobby-primary { color: var(--ink); background: var(--gold-soft); border: 1px solid var(--gold-soft); font-weight: 700; }
+.lobby-secondary { color: var(--ivory); background: transparent; border: 1px solid var(--line); }
+.lobby-primary:disabled, .lobby-secondary:disabled { opacity: .38; cursor: not-allowed; }
+.lobby-divider { display: flex; align-items: center; gap: 12px; margin: 28px 0 4px; color: rgba(246, 240, 223, .42); font-size: 10px; }
+.lobby-divider::before, .lobby-divider::after { content: ''; height: 1px; flex: 1; background: var(--line); }
+.form-error { margin: 12px 0 0; color: #ffaaa0; font-size: 12px; }
+.waiting-content { width: min(760px, calc(100vw - 28px)); margin: clamp(28px, 6vh, 70px) auto; text-align: center; }
+.room-code-display { display: inline-grid; gap: 4px; margin: 22px 0 32px; padding: 14px 28px; color: var(--gold-soft); background: rgba(216, 173, 85, .08); border: 1px solid rgba(216, 173, 85, .45); cursor: pointer; }
+.room-code-display strong { font: 700 clamp(28px, 6vw, 48px)/1 'Noto Serif SC', serif; letter-spacing: .24em; }
+.room-code-display small { color: var(--ivory-muted); font-size: 10px; }
+.waiting-seats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.waiting-seat { min-height: 120px; display: grid; place-items: center; align-content: center; gap: 5px; padding: 12px; background: rgba(246, 240, 223, .045); border: 1px solid var(--line); }
+.waiting-seat.is-offline { opacity: .5; }
+.waiting-seat.is-empty { color: rgba(246, 240, 223, .38); border-style: dashed; }
+.waiting-avatar { width: 44px; height: 44px; display: grid; place-items: center; color: var(--ink); background: var(--gold-soft); border-radius: 50%; font-family: 'Noto Serif SC', serif; }
+.is-empty .waiting-avatar { color: var(--ivory-muted); background: transparent; border: 1px solid var(--line); }
+.waiting-seat strong { font-size: 13px; }
+.waiting-seat small, .waiting-note { color: var(--ivory-muted); font-size: 10px; }
+.waiting-start { max-width: 360px; margin-top: 24px; }
+
 @keyframes deal-in {
   from { opacity: 0; transform: translateY(-24px) rotate(-6deg) scale(.86); }
   to { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
@@ -264,6 +294,12 @@ button { -webkit-tap-highlight-color: transparent; }
   .action-buttons .action-primary { grid-column: span 2; }
   .compare-popover { left: 6px; right: 6px; flex-wrap: wrap; }
   .compare-popover span { width: 100%; }
+  .online-header { height: 58px; }
+  .lobby-panel { margin: 22px auto; padding: 24px 20px; }
+  .waiting-content { margin-top: 28px; }
+  .waiting-seats { grid-template-columns: repeat(2, 1fr); }
+  .waiting-seat { min-height: 96px; }
+  .room-code-display { margin-bottom: 22px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

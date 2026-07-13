@@ -11,6 +11,7 @@ interface GameTableProps {
   onReset(): void;
   onExit(): void;
   connectionState?: 'online' | 'reconnecting' | 'offline';
+  modeLabel?: string;
 }
 
 export function GameTable({
@@ -21,6 +22,7 @@ export function GameTable({
   onReset,
   onExit,
   connectionState = 'online',
+  modeLabel = '单机对战',
 }: GameTableProps) {
   const viewer = view.players.find((player) => player.id === viewerId);
   if (!viewer) {
@@ -35,7 +37,7 @@ export function GameTable({
         <button className="round-icon-button" type="button" onClick={onExit} aria-label="退出牌桌">←</button>
         <div>
           <span className="table-brand">金局</span>
-          <small>单机对战</small>
+          <small>{modeLabel}</small>
         </div>
         <span className={`connection-pill is-${connectionState}`}>{connectionState === 'online' ? '牌桌顺畅' : '正在重连'}</span>
       </header>
