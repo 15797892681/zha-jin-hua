@@ -1,0 +1,37 @@
+zha-jin-hua/tests/lifecycle.test.ts
+  s_ba9c66153bd67c::t_f8313bb5ac9cfa 1-95
+zha-jin-hua/src/client/styles.css
+  s_ba9c66153bd67c::t_27571bad84f27a 128
+zha-jin-hua/src/server/rooms.ts
+  s_ba9c66153bd67c::t_82c322e2bbe694 3,72-74,106,125,139,150,153,165-172,185,189,195,221-222,237-239,241,262-274,309-390
+zha-jin-hua/src/server/index.ts
+  s_ba9c66153bd67c::t_82c322e2bbe694 43
+zha-jin-hua/src/server/socket.ts
+  s_ba9c66153bd67c::t_82c322e2bbe694 73-79
+zha-jin-hua/src/shared/game.ts
+  s_ba9c66153bd67c::t_82c322e2bbe694 132,244-264
+  s_ba9c66153bd67c::t_a9abc479952cb7 265
+zha-jin-hua/tests/countdown-ui.test.tsx
+  s_ba9c66153bd67c::t_b811ac69c147ca 2-39,41-42
+  s_ba9c66153bd67c::t_242fa8e023be8f 1,40
+zha-jin-hua/src/shared/types.ts
+  s_ba9c66153bd67c::t_82c322e2bbe694 86
+zha-jin-hua/src/client/components/GameTable.tsx
+  s_ba9c66153bd67c::t_27571bad84f27a 1-2,19-31,42,66-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "d9bddde695606f1e43bc8cf5996f4d59c8fcb8f4",
+  "prompts": {},
+  "sessions": {
+    "s_ba9c66153bd67c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f5a79-a8f1-7f90-8210-dbd8d97a9a15",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "linruibiao <linruibiao@codemao.cn>"
+    }
+  }
+}
