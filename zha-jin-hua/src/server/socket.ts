@@ -70,6 +70,13 @@ function broadcastGame(io: Server, room: Room): void {
 }
 
 export function registerSocketHandlers(io: Server, rooms: RoomManager): void {
+  rooms.subscribe((roomCode) => {
+    const room = rooms.get(roomCode);
+    if (!room) return;
+    broadcastRoom(io, rooms, room);
+    broadcastGame(io, room);
+  });
+
   io.on('connection', (socket) => {
     socket.on('room:create', async (payload: unknown, ack: Ack) => {
       try {

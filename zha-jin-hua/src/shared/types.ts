@@ -83,6 +83,7 @@ export interface GameState {
   baseBet: number;
   currentPlayerId: string | null;
   turnId: number;
+  turnDeadline: number | null;
   actionCount: number;
   winnerIds: string[];
   lastAction: LastAction | null;

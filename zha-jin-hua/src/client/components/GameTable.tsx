@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 import type { GameAction, PlayerGameView } from '../../shared/types';
 import { ActionBar } from './ActionBar';
 import { PlayerSeat } from './PlayerSeat';
@@ -14,6 +16,19 @@ interface GameTableProps {
   modeLabel?: string;
 }
 
+function useRemainingSeconds(deadline: number | null): number | null {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    setNow(Date.now());
+    if (deadline === null) return undefined;
+    const interval = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(interval);
+  }, [deadline]);
+
+  return deadline === null ? null : Math.max(0, Math.ceil((deadline - now) / 1000));
+}
+
 export function GameTable({
   view,
   viewerId,
@@ -24,6 +39,7 @@ export function GameTable({
   connectionState = 'online',
   modeLabel = '单机对战',
 }: GameTableProps) {
+  const remainingSeconds = useRemainingSeconds(view.turnDeadline);
   const viewer = view.players.find((player) => player.id === viewerId);
   if (!viewer) {
     throw new Error('找不到当前玩家');
@@ -47,6 +63,11 @@ export function GameTable({
           <span>底池</span>
           <strong>{view.pot}</strong>
           <small>基础注 {view.baseBet}</small>
+          {remainingSeconds !== null && (
+            <output className="turn-countdown" aria-live="polite" aria-label="行动剩余时间">
+              {remainingSeconds} 秒
+            </output>
+          )}
         </div>
         {view.lastAction && (
           <p className="last-action" aria-live="polite">

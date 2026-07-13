@@ -40,6 +40,7 @@ export function createGameServer(): GameServer {
       });
     },
     stop() {
+      rooms.dispose();
       if (!httpServer.listening) return Promise.resolve();
       return new Promise((resolve) => io.close(() => resolve()));
     },

@@ -129,6 +129,7 @@ export function createGame(config: GameConfig): GameState {
     baseBet: config.ante,
     currentPlayerId: players[0].id,
     turnId: 1,
+    turnDeadline: null,
     actionCount: 0,
     winnerIds: [],
     lastAction: null,
@@ -239,4 +240,26 @@ export function applyAction(state: GameState, action: GameAction): GameState {
       });
     }
   }
+}
+
+export function forceFold(state: GameState, playerId: string): GameState {
+  if (state.status !== 'playing') {
+    return state;
+  }
+  const next = cloneState(state);
+  const player = next.players.find((candidate) => candidate.id === playerId);
+  if (!player || player.status !== 'active') {
+    return state;
+  }
+
+  const wasCurrent = next.currentPlayerId === playerId;
+  player.status = 'folded';
+  next.lastAction = { type: 'fold', playerId };
+  next.actionCount += 1;
+  next.turnId += 1;
+  const settled = finishIfDecided(next);
+  if (settled.status === 'playing' && wasCurrent) {
+    settled.currentPlayerId = nextActivePlayerId(settled, playerId);
+  }
+  return settled;
 }

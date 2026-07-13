@@ -125,6 +125,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .pot-display { position: absolute; left: 50%; top: 48%; transform: translate(-50%, -50%); text-align: center; }
 .pot-display span, .pot-display small { display: block; color: var(--ivory-muted); font-size: 11px; letter-spacing: .12em; }
 .pot-display strong { display: block; margin: 4px 0; color: var(--gold-soft); font: 700 34px/1 'Noto Serif SC', serif; }
+.turn-countdown { display: inline-block; margin-top: 9px; padding: 5px 9px; color: var(--gold-soft); background: rgba(7, 29, 24, .55); border: 1px solid rgba(216, 173, 85, .35); border-radius: 99px; font-size: 11px; }
 .last-action { position: absolute; left: 50%; top: 61%; transform: translateX(-50%); margin: 0; color: var(--ivory-muted); font-size: 12px; white-space: nowrap; }
 .player-seat { position: absolute; display: flex; align-items: center; gap: 9px; min-width: 150px; padding: 8px 10px; border-radius: 12px; transition: opacity .25s ease, transform .25s ease; }
 .player-seat.is-current { background: rgba(216, 173, 85, .12); box-shadow: 0 0 0 1px rgba(216, 173, 85, .5); }
