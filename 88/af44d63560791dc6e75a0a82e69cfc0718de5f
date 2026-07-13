@@ -1,0 +1,19 @@
+.gitignore
+  s_ba9c66153bd67c::t_883352127b2222 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "88af44d63560791dc6e75a0a82e69cfc0718de5f",
+  "prompts": {},
+  "sessions": {
+    "s_ba9c66153bd67c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f5a79-a8f1-7f90-8210-dbd8d97a9a15",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "linruibiao <linruibiao@codemao.cn>"
+    }
+  }
+}
