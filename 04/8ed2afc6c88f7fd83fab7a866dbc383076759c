@@ -1,0 +1,39 @@
+zha-jin-hua/src/shared/evaluate.ts
+  s_ba9c66153bd67c::t_84e17c1b7bf3ea 1-103
+zha-jin-hua/src/shared/cards.ts
+  s_ba9c66153bd67c::t_84e17c1b7bf3ea 1-16
+zha-jin-hua/src/test/setup.ts
+  s_ba9c66153bd67c::t_ff00d4aff72ab1 1
+zha-jin-hua/index.html
+  s_ba9c66153bd67c::t_ff00d4aff72ab1 1-14
+docs/superpowers/plans/2026-07-13-zha-jin-hua-implementation.md
+  s_ba9c66153bd67c::t_48cb59c46e5da6 89
+zha-jin-hua/tsconfig.json
+  s_ba9c66153bd67c::t_ff00d4aff72ab1 1-21
+zha-jin-hua/src/shared/types.ts
+  s_ba9c66153bd67c::t_84e17c1b7bf3ea 1-24
+zha-jin-hua/package.json
+  s_ba9c66153bd67c::t_ff00d4aff72ab1 1-46
+zha-jin-hua/vite.config.ts
+  s_ba9c66153bd67c::t_ff00d4aff72ab1 1-22
+zha-jin-hua/tests/evaluate.test.ts
+  s_ba9c66153bd67c::t_aaecca51b841ec 1-64
+zha-jin-hua/package-lock.json
+  s_ba9c66153bd67c::t_7b50cf9b805f65 1-5316
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "048ed2afc6c88f7fd83fab7a866dbc383076759c",
+  "prompts": {},
+  "sessions": {
+    "s_ba9c66153bd67c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f5a79-a8f1-7f90-8210-dbd8d97a9a15",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "linruibiao <linruibiao@codemao.cn>"
+    }
+  }
+}
