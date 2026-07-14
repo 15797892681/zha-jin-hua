@@ -1,0 +1,21 @@
+zha-jin-hua/docs/superpowers/plans/2026-07-14-solo-ai-expert-mode.md
+  s_c49402a7cc7736::t_9642af7d441181 1-149,151-177,185-238,278,340-383,385,484-799,801-885
+  s_c49402a7cc7736::t_04436300eaf47a 150,288-337
+  s_c49402a7cc7736::t_53f30d25c7a90c 178-184,239-277,279-287,338-339,384,386-483,800
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "eddf7f8e8f298052a63ea4e441f34d5a0c8dc979",
+  "prompts": {},
+  "sessions": {
+    "s_c49402a7cc7736": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f604c-6c72-7a32-b3d7-e4c450534d24",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "linruibiao <linruibiao@codemao.cn>"
+    }
+  }
+}
