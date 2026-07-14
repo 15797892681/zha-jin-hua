@@ -1,0 +1,54 @@
+zha-jin-hua/tests/game.test.ts
+  s_c49402a7cc7736::t_208f40206ac769 80,87
+zha-jin-hua/e2e/responsive.spec.ts
+  s_c49402a7cc7736::t_208f40206ac769 113-128
+zha-jin-hua/.trellis/tasks/07-14-fix-solo-card-ai-balance/implement.jsonl
+  s_c49402a7cc7736::t_d4ed9254105ba5 1
+zha-jin-hua/tests/ai-balance.test.ts
+  s_c49402a7cc7736::t_208f40206ac769 1-60,71-86
+  s_c49402a7cc7736::t_6ba5a272ba8e29 61-70
+zha-jin-hua/src/client/styles.css
+  s_c49402a7cc7736::t_e615e24e3070ae 201-202
+zha-jin-hua/src/client/game/aiDecisionService.ts
+  s_c49402a7cc7736::t_aa79490714033b 95
+zha-jin-hua/tests/ai.test.ts
+  s_c49402a7cc7736::t_2a55b8a63ab462 3,83-96
+  s_c49402a7cc7736::t_208f40206ac769 56-82,97-98
+zha-jin-hua/src/shared/game.ts
+  s_c49402a7cc7736::t_e615e24e3070ae 152-155
+zha-jin-hua/src/ai/strategy.ts
+  s_c49402a7cc7736::t_aa79490714033b 4,89,91-100,106,145
+  s_c49402a7cc7736::t_41b07cbf908bc0 46-48,149-152
+  s_c49402a7cc7736::t_e615e24e3070ae 35,38,42-44,49-50,54-57,62-63,66,71-88,128,131-132,134-143,147-148,153-155,158,161,164,167,173,176
+  s_c49402a7cc7736::t_92dba74e11c7e6 90
+  s_c49402a7cc7736::t_2c347e5f9f38c4 146
+zha-jin-hua/.trellis/tasks/07-14-fix-solo-card-ai-balance/task.json
+  s_c49402a7cc7736::t_4f51aaa7ef7579 6,8
+  s_c49402a7cc7736::t_d4ed9254105ba5 1-5,7,9-26
+zha-jin-hua/.trellis/tasks/07-14-fix-solo-card-ai-balance/prd.md
+  s_c49402a7cc7736::t_d4ed9254105ba5 1-4,6-8,14-16,22-27
+  s_c49402a7cc7736::t_2a045dd8e7a37b 5,9-13
+  s_c49402a7cc7736::t_348bc0185811ae 17-21
+zha-jin-hua/.trellis/tasks/07-14-fix-solo-card-ai-balance/check.jsonl
+  s_c49402a7cc7736::t_d4ed9254105ba5 1
+zha-jin-hua/.trellis/spec/frontend/component-guidelines.md
+  s_c49402a7cc7736::t_9f163a1dbb62df 91-95
+zha-jin-hua/.trellis/spec/backend/quality-guidelines.md
+  s_c49402a7cc7736::t_9f163a1dbb62df 1-117
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "36d0a7848f1b2387c58788b534795a44a3bc5e61",
+  "prompts": {},
+  "sessions": {
+    "s_c49402a7cc7736": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f604c-6c72-7a32-b3d7-e4c450534d24",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "linruibiao <linruibiao@codemao.cn>"
+    }
+  }
+}
