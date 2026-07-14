@@ -46,6 +46,14 @@ npm start
 
 默认地址为 `http://localhost:3001`，也可以通过 `PORT` 指定端口，例如 `PORT=4173 npm start`。服务监听 `0.0.0.0`，因此也可通过 `http://电脑局域网IP:端口` 从手机访问。健康检查位于 `/healthz`。
 
+## DeepSeek 单机 AI
+
+单机模式会通过服务端调用 `deepseek-v4-flash` 生成动作和台词。密钥只允许配置在服务端；未配置、超时、达到限额或供应商异常时，游戏会在 3 秒决策预算后自动使用本地规则 AI，不影响在线真人模式。
+
+本地开发可复制 `.env.example` 为 `.env`，填入轮换后的 `DEEPSEEK_API_KEY`，再运行 `npm run dev`。不要把 `.env`、密钥或带密钥的命令输出提交到 Git。
+
+Render 部署时，在服务的 Environment 页面设置 `DEEPSEEK_API_KEY`，并按 `.env.example` 添加其他非敏感配置。不要把密钥写入 `render.yaml`。设置完成后重新部署，先检查 `/healthz`，再完成一场单机冒烟测试和一场在线双人回归测试。
+
 ## Render 公网部署
 
 仓库内的 `render.yaml` 定义了支持 WebSocket 的 Render Web Service。若本项目位于仓库的 `zha-jin-hua/` 子目录，请在 Render 创建 Blueprint 时选择仓库根目录下的 `zha-jin-hua/render.yaml`：
