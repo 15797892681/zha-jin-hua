@@ -1,0 +1,25 @@
+zha-jin-hua/src/client/styles.css
+  s_ba9c66153bd67c::t_d4d1ce542e3301 155-157,165,313-314
+zha-jin-hua/tests/solo-ui.test.tsx
+  s_ba9c66153bd67c::t_c6e309c3320d8c 1,10,40,49-51,57-92,97,112-114
+zha-jin-hua/src/client/components/GameTable.tsx
+  s_ba9c66153bd67c::t_d4d1ce542e3301 86
+zha-jin-hua/e2e/responsive.spec.ts
+  s_ba9c66153bd67c::t_c6e309c3320d8c 5-9,12-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "fa5c57edbb98258ad454a45552790d2ccac50110",
+  "prompts": {},
+  "sessions": {
+    "s_ba9c66153bd67c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f5a79-a8f1-7f90-8210-dbd8d97a9a15",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "linruibiao <linruibiao@codemao.cn>"
+    }
+  }
+}
