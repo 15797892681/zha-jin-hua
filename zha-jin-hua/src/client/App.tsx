@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { GameTable } from './components/GameTable';
 import { HomeScreen } from './components/HomeScreen';
 import { RulesDialog } from './components/RulesDialog';
+import type { AiDecisionService } from './game/aiDecisionService';
 import { useSoloGame } from './game/useSoloGame';
 import { useSound } from './game/useSound';
 import { OnlineMode } from './online/OnlineMode';
@@ -12,12 +13,13 @@ type Screen = 'home' | 'solo' | 'online';
 
 interface AppProps {
   socketFactory?: SocketFactory;
+  soloDecisionService?: AiDecisionService;
 }
 
-export function App({ socketFactory = createBrowserSocket }: AppProps) {
+export function App({ socketFactory = createBrowserSocket, soloDecisionService }: AppProps) {
   const [screen, setScreen] = useState<Screen>('home');
   const [rulesOpen, setRulesOpen] = useState(false);
-  const solo = useSoloGame();
+  const solo = useSoloGame(soloDecisionService);
   const sound = useSound();
 
   if (screen === 'solo') {

@@ -1,9 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { chooseAiAction, type AiStyle } from '../../ai/strategy';
+import type { AiStyle, PublicMemoryEntry } from '../../ai/contracts';
+import { actionToMemory, appendPublicMemory } from '../../ai/context';
 import { applyAction, createGame } from '../../shared/game';
 import type { GameAction, GamePlayerInput, GameState, PlayerGameView } from '../../shared/types';
 import { toPlayerView } from '../../shared/visibility';
+import {
+  browserAiDecisionService,
+  type AiDecisionService,
+} from './aiDecisionService';
 
 const HUMAN_ID = 'you';
 const ANTE = 10;
@@ -43,13 +48,55 @@ function nextRound(previous: GameState): GameState {
 export interface SoloController {
   view: PlayerGameView;
   humanId: string;
+  aiThinkingPlayerId: string | null;
+  aiDialogueByPlayerId: Record<string, string>;
+  aiNotice: string | null;
   dispatch(action: GameAction): void;
   nextRound(): void;
   resetMatch(): void;
 }
 
-export function useSoloGame(): SoloController {
-  const [state, setState] = useState<GameState>(freshMatch);
+interface SoloMatchState {
+  game: GameState;
+  memory: PublicMemoryEntry[];
+}
+
+export function useSoloGame(
+  decisionService: AiDecisionService = browserAiDecisionService,
+): SoloController {
+  const [match, setMatch] = useState<SoloMatchState>(() => ({ game: freshMatch(), memory: [] }));
+  const [aiThinkingPlayerId, setAiThinkingPlayerId] = useState<string | null>(null);
+  const [aiDialogueByPlayerId, setAiDialogueByPlayerId] = useState<Record<string, string>>({});
+  const [aiNotice, setAiNotice] = useState<string | null>(null);
+  const generationRef = useRef(0);
+  const noticeShownRef = useRef(false);
+  const dialogueTimersRef = useRef(new Map<string, number>());
+  const state = match.game;
+
+  const clearDialogueTimers = useCallback(() => {
+    dialogueTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    dialogueTimersRef.current.clear();
+  }, []);
+
+  const showDialogue = useCallback((playerId: string, text: string) => {
+    const oldTimer = dialogueTimersRef.current.get(playerId);
+    if (oldTimer !== undefined) {
+      window.clearTimeout(oldTimer);
+    }
+
+    setAiDialogueByPlayerId((current) => ({ ...current, [playerId]: text }));
+    const timer = window.setTimeout(() => {
+      setAiDialogueByPlayerId((current) => {
+        const next = { ...current };
+        delete next[playerId];
+        return next;
+      });
+      dialogueTimersRef.current.delete(playerId);
+    }, 3500);
+    dialogueTimersRef.current.set(playerId, timer);
+  }, []);
+
+  useEffect(() => clearDialogueTimers, [clearDialogueTimers]);
 
   useEffect(() => {
     const currentId = state.currentPlayerId;
@@ -57,39 +104,102 @@ export function useSoloGame(): SoloController {
       return undefined;
     }
 
-    const timer = window.setTimeout(() => {
-      setState((latest) => {
-        if (latest.status !== 'playing' || latest.currentPlayerId !== currentId) {
-          return latest;
+    const style = AI_STYLES[currentId];
+    if (!style) {
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    const generation = generationRef.current;
+    const timer = window.setTimeout(async () => {
+      setAiThinkingPlayerId(currentId);
+      try {
+        const result = await decisionService.decide(
+          state,
+          currentId,
+          style,
+          match.memory,
+          controller.signal,
+        );
+        if (controller.signal.aborted || generationRef.current !== generation) {
+          return;
         }
-        const style = AI_STYLES[currentId];
-        if (!style) {
-          return latest;
+
+        setMatch((latest) => {
+          if (
+            latest.game.status !== 'playing'
+            || latest.game.currentPlayerId !== currentId
+            || latest.game.turnId !== state.turnId
+          ) {
+            return latest;
+          }
+
+          const nextGame = applyAction(latest.game, result.action);
+          let memory = appendPublicMemory(latest.memory, actionToMemory(result.action));
+          memory = appendPublicMemory(memory, {
+            kind: 'dialogue',
+            actorId: currentId,
+            text: result.dialogue,
+          });
+          return { game: nextGame, memory };
+        });
+        showDialogue(currentId, result.dialogue);
+        if (result.source === 'rule' && !noticeShownRef.current) {
+          noticeShownRef.current = true;
+          setAiNotice('AI 暂时走神，已由本地策略接管');
         }
-        return applyAction(latest, chooseAiAction(latest, currentId, style));
-      });
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) {
+          throw error;
+        }
+      } finally {
+        if (generationRef.current === generation) {
+          setAiThinkingPlayerId(null);
+        }
+      }
     }, 480 + Math.round(Math.random() * 320));
 
-    return () => window.clearTimeout(timer);
-  }, [state]);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort(new DOMException('stale turn', 'AbortError'));
+    };
+  }, [decisionService, match.memory, showDialogue, state]);
 
   const dispatch = useCallback((action: GameAction) => {
     if (action.playerId !== HUMAN_ID) {
       return;
     }
-    setState((latest) => applyAction(latest, action));
+    setMatch((latest) => ({
+      game: applyAction(latest.game, action),
+      memory: appendPublicMemory(latest.memory, actionToMemory(action)),
+    }));
   }, []);
 
   const startNextRound = useCallback(() => {
-    setState((latest) => nextRound(latest));
-  }, []);
+    generationRef.current += 1;
+    clearDialogueTimers();
+    setMatch((latest) => ({ game: nextRound(latest.game), memory: latest.memory }));
+    setAiThinkingPlayerId(null);
+    setAiDialogueByPlayerId({});
+  }, [clearDialogueTimers]);
 
-  const resetMatch = useCallback(() => setState(freshMatch()), []);
+  const resetMatch = useCallback(() => {
+    generationRef.current += 1;
+    clearDialogueTimers();
+    noticeShownRef.current = false;
+    setMatch({ game: freshMatch(), memory: [] });
+    setAiThinkingPlayerId(null);
+    setAiDialogueByPlayerId({});
+    setAiNotice(null);
+  }, [clearDialogueTimers]);
   const view = useMemo(() => toPlayerView(state, HUMAN_ID), [state]);
 
   return {
     view,
     humanId: HUMAN_ID,
+    aiThinkingPlayerId,
+    aiDialogueByPlayerId,
+    aiNotice,
     dispatch,
     nextRound: startNextRound,
     resetMatch,
