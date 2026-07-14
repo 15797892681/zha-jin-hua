@@ -7,6 +7,11 @@ export type AiStyle = (typeof AI_STYLES)[number];
 
 const idSchema = z.string().min(1).max(64);
 const amountSchema = z.number().int().nonnegative().finite();
+const dialogueSchema = z.string()
+  .min(1)
+  .max(40)
+  .regex(/^[\p{Script=Han}\p{N}\p{P}\p{Z}\s]+$/u)
+  .regex(/\p{Script=Han}/u);
 const cardSchema = z.object({
   suit: z.enum(['S', 'H', 'D', 'C']),
   rank: z.enum(['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']),
@@ -72,7 +77,7 @@ export type AiActionIntent = z.infer<typeof aiActionIntentSchema>;
 
 export const deepSeekDecisionSchema = z.object({
   action: aiActionIntentSchema,
-  dialogue: z.string().min(1).max(40),
+  dialogue: dialogueSchema,
 }).strict();
 export type DeepSeekDecision = z.infer<typeof deepSeekDecisionSchema>;
 
@@ -86,7 +91,7 @@ const gameActionSchema = z.discriminatedUnion('type', [
 
 export const aiDecisionResponseSchema = z.object({
   requestId: idSchema, turnId: z.number().int().positive(), playerId: idSchema,
-  action: gameActionSchema, dialogue: z.string().min(1).max(40),
+  action: gameActionSchema, dialogue: dialogueSchema,
 }).strict();
 export type AiDecisionResponse = z.infer<typeof aiDecisionResponseSchema>;
 

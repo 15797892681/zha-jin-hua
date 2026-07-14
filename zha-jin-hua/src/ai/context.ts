@@ -1,5 +1,6 @@
 import { legalActions } from '../shared/game';
 import type { GameAction, GameState } from '../shared/types';
+import { aiDecisionRequestSchema } from './contracts';
 import type { AiDecisionRequest, AiStyle, PublicMemoryEntry } from './contracts';
 
 export function appendPublicMemory(
@@ -27,7 +28,7 @@ export function buildAiDecisionRequest(
   const self = state.players.find((player) => player.id === playerId);
   if (!self || self.status !== 'active') throw new Error('AI_NOT_ACTING');
   const actions = legalActions(state, playerId);
-  return {
+  return aiDecisionRequestSchema.parse({
     requestId, turnId: state.turnId, playerId, style,
     self: {
       cards: self.hasLooked ? self.cards.map((card) => ({ ...card })) : null,
@@ -47,5 +48,5 @@ export function buildAiDecisionRequest(
       compareTargets: [...actions.compareTargets], canFold: actions.canFold,
     },
     memory: memory.slice(-8),
-  };
+  });
 }

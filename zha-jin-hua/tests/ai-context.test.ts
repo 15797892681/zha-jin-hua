@@ -75,6 +75,55 @@ describe('AI request contract', () => {
     }).success).toBe(false);
   });
 
+  it('accepts Chinese dialogue with punctuation, digits, and whitespace in both response schemas', () => {
+    const dialogue = '第 2 局，我跟！';
+    expect(deepSeekDecisionSchema.safeParse({
+      action: { type: 'call' }, dialogue,
+    }).success).toBe(true);
+    expect(aiDecisionResponseSchema.safeParse({
+      requestId: 'req-zh', turnId: 1, playerId: 'bot',
+      action: { type: 'call', playerId: 'bot', turnId: 1 }, dialogue,
+    }).success).toBe(true);
+  });
+
+  it('rejects English-only and mixed Latin-letter dialogue', () => {
+    expect(deepSeekDecisionSchema.safeParse({
+      action: { type: 'fold' }, dialogue: 'fold now',
+    }).success).toBe(false);
+    expect(aiDecisionResponseSchema.safeParse({
+      requestId: 'req-latin', turnId: 1, playerId: 'bot',
+      action: { type: 'fold', playerId: 'bot', turnId: 1 }, dialogue: '收手 bluff。',
+    }).success).toBe(false);
+  });
+
+  it('rejects structurally wider memory entries containing hidden cards or deck data', () => {
+    const widerMemory = {
+      kind: 'dialogue' as const,
+      actorId: 'human',
+      text: '该你了。',
+      cards: cards('2S 7H 9D'),
+      deck: cards('4S 5H 6D'),
+    };
+
+    expect(() => buildAiDecisionRequest(
+      fixture(false), 'bot', 'cautious', [widerMemory], 'req-hidden',
+    )).toThrow();
+  });
+
+  it('clones accepted memory so later input mutation cannot change the request', () => {
+    const memory: PublicMemoryEntry[] = [
+      { kind: 'dialogue', actorId: 'human', text: '该你了。' },
+    ];
+    const request = buildAiDecisionRequest(fixture(false), 'bot', 'cautious', memory, 'req-clone');
+
+    memory[0].actorId = 'other';
+    if (memory[0].kind === 'dialogue') memory[0].text = '已篡改。';
+
+    expect(request.memory).toEqual([
+      { kind: 'dialogue', actorId: 'human', text: '该你了。' },
+    ]);
+  });
+
   it('matches raise amounts and compare targets exactly', () => {
     const legal = buildAiDecisionRequest(fixture(true), 'bot', 'bold', [], 'req-3').legalActions;
     expect(isLegalIntent({ type: 'raise', amount: legal.raiseAmounts[0] }, legal)).toBe(true);
