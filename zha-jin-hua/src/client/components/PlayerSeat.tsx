@@ -7,6 +7,8 @@ interface PlayerSeatProps {
   isSelf: boolean;
   isCurrent: boolean;
   gameFinished: boolean;
+  isThinking?: boolean;
+  dialogue?: string;
 }
 
 const STATUS_LABEL = {
@@ -15,7 +17,15 @@ const STATUS_LABEL = {
   out: '比牌出局',
 } as const;
 
-export function PlayerSeat({ player, index, isSelf, isCurrent, gameFinished }: PlayerSeatProps) {
+export function PlayerSeat({
+  player,
+  index,
+  isSelf,
+  isCurrent,
+  gameFinished,
+  isThinking = false,
+  dialogue,
+}: PlayerSeatProps) {
   const reveal = (isSelf && player.hasLooked) || (gameFinished && player.status !== 'folded');
 
   return (
@@ -23,6 +33,11 @@ export function PlayerSeat({ player, index, isSelf, isCurrent, gameFinished }: P
       className={`player-seat seat-${index} ${isSelf ? 'is-self' : ''} ${isCurrent ? 'is-current' : ''} is-${player.status}`}
       aria-label={`${player.name}，${STATUS_LABEL[player.status]}，${player.chips} 筹码`}
     >
+      {(isThinking || dialogue) && (
+        <p className={`ai-speech ${isThinking ? 'is-thinking' : ''}`} aria-live="polite">
+          {isThinking ? '正在思考…' : dialogue}
+        </p>
+      )}
       <div className="seat-avatar" aria-hidden="true">{player.name.slice(0, 1)}</div>
       <div className="seat-copy">
         <div className="seat-name-row">

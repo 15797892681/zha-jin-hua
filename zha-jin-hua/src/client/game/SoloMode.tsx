@@ -20,6 +20,9 @@ export function SoloMode({ decisionService, sound, onExit }: SoloModeProps) {
       onNextRound={solo.nextRound}
       onReset={solo.resetMatch}
       onExit={onExit}
+      aiThinkingPlayerId={solo.aiThinkingPlayerId}
+      aiDialogueByPlayerId={solo.aiDialogueByPlayerId}
+      aiNotice={solo.aiNotice}
       soundEnabled={sound.enabled}
       onToggleSound={sound.toggle}
       onSound={sound.play}

@@ -34,6 +34,44 @@ describe('solo game UI', () => {
     expect(screen.queryByRole('button', { name: '看牌' })).not.toBeInTheDocument();
   });
 
+  it('shows thinking and exposes validated dialogue to assistive technology', async () => {
+    vi.useFakeTimers();
+    let resolveDecision!: (value: Awaited<ReturnType<AiDecisionService['decide']>>) => void;
+    const service: AiDecisionService = {
+      decide: vi.fn(() => new Promise<AiTurnDecision>((resolve) => { resolveDecision = resolve; })),
+    };
+    render(<App soloDecisionService={service} />);
+    fireEvent.click(screen.getByRole('button', { name: '单机对战' }));
+    fireEvent.click(screen.getByRole('button', { name: /跟注 10/ }));
+    await act(async () => vi.advanceTimersByTimeAsync(800));
+    expect(screen.getByText('正在思考…')).toBeInTheDocument();
+    await act(async () => resolveDecision({
+      source: 'deepseek',
+      action: { type: 'fold', playerId: 'bot-cautious', turnId: 2 },
+      dialogue: '这轮先观察。',
+    }));
+    expect(screen.getByText('这轮先观察。')).toHaveAttribute('aria-live', 'polite');
+  });
+
+  it('renders one degradation notice across consecutive fallback turns', async () => {
+    vi.useFakeTimers();
+    const service: AiDecisionService = {
+      decide: vi.fn(async (state, playerId) => ({
+        source: 'rule' as const,
+        fallbackReason: 'TIMEOUT',
+        action: { type: 'call' as const, playerId, turnId: state.turnId },
+        dialogue: '本地策略接管。',
+      })),
+    };
+    render(<App soloDecisionService={service} />);
+    fireEvent.click(screen.getByRole('button', { name: '单机对战' }));
+    fireEvent.click(screen.getByRole('button', { name: /跟注 10/ }));
+    await act(async () => vi.advanceTimersByTimeAsync(800));
+    await act(async () => vi.advanceTimersByTimeAsync(800));
+    expect(service.decide).toHaveBeenCalledTimes(2);
+    expect(screen.getAllByText('AI 暂时走神，已由本地策略接管')).toHaveLength(1);
+  });
+
   it('opens rules from the home screen and can close them', async () => {
     const user = userEvent.setup();
     render(<App />);

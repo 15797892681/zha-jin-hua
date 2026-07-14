@@ -16,6 +16,9 @@ interface GameTableProps {
   onExit(): void;
   connectionState?: 'online' | 'reconnecting' | 'offline';
   modeLabel?: string;
+  aiThinkingPlayerId?: string | null;
+  aiDialogueByPlayerId?: Record<string, string>;
+  aiNotice?: string | null;
   soundEnabled?: boolean;
   onToggleSound?: () => void;
   onSound?: (cue: SoundCue) => void;
@@ -43,6 +46,9 @@ export function GameTable({
   onExit,
   connectionState = 'online',
   modeLabel = '单机对战',
+  aiThinkingPlayerId = null,
+  aiDialogueByPlayerId = {},
+  aiNotice = null,
   soundEnabled = false,
   onToggleSound,
   onSound,
@@ -79,6 +85,7 @@ export function GameTable({
       </header>
       <section className="felt-table" aria-label="炸金花牌桌">
         <div className="table-ring" aria-hidden="true" />
+        {aiNotice && <p className="ai-notice" role="status">{aiNotice}</p>}
         <div className="pot-display">
           <span>底池</span>
           <strong>{view.pot}</strong>
@@ -107,6 +114,8 @@ export function GameTable({
             isSelf={player.id === viewerId}
             isCurrent={view.currentPlayerId === player.id}
             gameFinished={view.status === 'finished'}
+            isThinking={aiThinkingPlayerId === player.id}
+            dialogue={aiDialogueByPlayerId[player.id]}
           />
         ))}
       </section>
