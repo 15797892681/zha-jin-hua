@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createAiDecisionService } from '../src/client/game/aiDecisionService';
+import type { PublicMemoryEntry } from '../src/ai/contracts';
 import { createGame } from '../src/shared/game';
 
 function state() {
@@ -51,6 +52,38 @@ describe('AI decision service', () => {
 
     expect(result.source).toBe('rule');
     expect(result.fallbackReason).toBe(`HTTP_${status}`);
+  });
+
+  it('uses expert counterplay when a provider failure exposes a viewed pair to pressure', async () => {
+    const game = state();
+    game.players[0].cards = [
+      { rank: '8', suit: 'S' },
+      { rank: '8', suit: 'H' },
+      { rank: 'K', suit: 'D' },
+    ];
+    game.players[0].hasLooked = true;
+    game.players[1].roundContribution = 80;
+    game.baseBet = 50;
+    game.lastAction = { type: 'raise', playerId: 'you', amount: 50 };
+    const memory: PublicMemoryEntry[] = [
+      { kind: 'action', actorId: 'you', action: 'raise', amount: 50 },
+    ];
+    const service = createAiDecisionService({
+      fetchImpl: vi.fn().mockResolvedValue(new Response('{}', { status: 503 })),
+      requestId: () => 'req-expert-fallback',
+      random: () => 0,
+    });
+
+    await expect(service.decide(
+      game,
+      'bot',
+      'cautious',
+      memory,
+      new AbortController().signal,
+    )).resolves.toMatchObject({
+      source: 'rule',
+      action: { type: 'compare', targetId: 'you' },
+    });
   });
 
   it('falls back when a response action is illegal for the current state', async () => {

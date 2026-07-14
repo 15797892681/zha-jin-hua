@@ -68,18 +68,26 @@ describe('chooseAiAction', () => {
     expect(chooseAiAction(state, 'bot', 'cautious', () => 0).type).toBe('compare');
   });
 
-  it('distinguishes a strong high-card hand from a weak one under the same pressure', () => {
+  it('challenges pressure with a strong high card while folding a weak one', () => {
     const strong = fixture('AS KH 9D');
     strong.players[0].hasLooked = true;
+    strong.players[2].roundContribution = 30;
     strong.baseBet = 20;
     strong.lastAction = { type: 'raise', playerId: 'p3', amount: 20 };
     const weak = fixture('2S 7H 9D');
     weak.players[0].hasLooked = true;
+    weak.players[2].roundContribution = 30;
     weak.baseBet = 20;
     weak.lastAction = { type: 'raise', playerId: 'p3', amount: 20 };
+    const memory: PublicMemoryEntry[] = [
+      { kind: 'action', actorId: 'p3', action: 'raise', amount: 20 },
+    ];
 
-    expect(chooseAiAction(strong, 'bot', 'cautious', () => 0).type).toBe('call');
-    expect(chooseAiAction(weak, 'bot', 'cautious', () => 0).type).toBe('fold');
+    expect(chooseAiAction(strong, 'bot', 'cautious', () => 0, memory)).toMatchObject({
+      type: 'compare',
+      targetId: 'p3',
+    });
+    expect(chooseAiAction(weak, 'bot', 'cautious', () => 0, memory).type).toBe('fold');
   });
 
   it('remembers an opponent raise after looking and challenges with a competitive hand', () => {
@@ -94,6 +102,22 @@ describe('chooseAiAction', () => {
     ];
 
     expect(chooseAiAction(state, 'bot', 'cautious', () => 0, memory).type).toBe('compare');
+  });
+
+  it('challenges the current aggressor with a viewed pair before the late round', () => {
+    const state = fixture('8S 8H KD');
+    state.players[0].hasLooked = true;
+    state.players[1].roundContribution = 80;
+    state.baseBet = 50;
+    state.lastAction = { type: 'raise', playerId: 'p2', amount: 50 };
+    const memory: PublicMemoryEntry[] = [
+      { kind: 'action', actorId: 'p2', action: 'raise', amount: 50 },
+    ];
+
+    expect(chooseAiAction(state, 'bot', 'cautious', () => 0, memory)).toMatchObject({
+      type: 'compare',
+      targetId: 'p2',
+    });
   });
 
   it('is reproducible when supplied the same random source', () => {
