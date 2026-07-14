@@ -1,0 +1,24 @@
+zha-jin-hua/src/client/App.tsx
+  s_ba9c66153bd67c::t_719df5083ec1d3 6,16,19,22
+zha-jin-hua/src/client/game/useSoloGame.ts
+  s_ba9c66153bd67c::t_719df5083ec1d3 1,3-4,8-11,51-53,59-99,107-149,151-153,155-159,162-166,172-175,179-194,200-202
+zha-jin-hua/tests/solo-game-ai.test.ts
+  s_ba9c66153bd67c::t_27eb09a203bf6f 35
+  s_ba9c66153bd67c::t_ec43716b916a44 1-34,36-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "ccde428ef6208550dbb1607d59287815675281ca",
+  "prompts": {},
+  "sessions": {
+    "s_ba9c66153bd67c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f5a79-a8f1-7f90-8210-dbd8d97a9a15",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "linruibiao <linruibiao@codemao.cn>"
+    }
+  }
+}
