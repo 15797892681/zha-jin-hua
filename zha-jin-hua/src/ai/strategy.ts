@@ -1,8 +1,9 @@
 import { evaluateHand } from '../shared/evaluate';
 import { legalActions } from '../shared/game';
 import type { GameAction, GameState, LegalActions } from '../shared/types';
+import type { AiStyle } from './contracts';
 
-export type AiStyle = 'cautious' | 'bold' | 'chaotic';
+export type { AiStyle } from './contracts';
 
 function lookAction(state: GameState, playerId: string): GameAction {
   return { type: 'look', playerId, turnId: state.turnId };
