@@ -1,0 +1,21 @@
+zha-jin-hua/tests/deepseek.test.ts
+  s_ba9c66153bd67c::t_c5a8898735b0b0 1-71
+zha-jin-hua/src/server/ai/deepseek.ts
+  s_ba9c66153bd67c::t_25eb8ea6b77fd8 1-103
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "caa9d5b26e6bcccd380abaa0fa1d0d5f25e59c7a",
+  "prompts": {},
+  "sessions": {
+    "s_ba9c66153bd67c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f5a79-a8f1-7f90-8210-dbd8d97a9a15",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "linruibiao <linruibiao@codemao.cn>"
+    }
+  }
+}
