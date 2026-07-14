@@ -3,9 +3,10 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import express, { type Express } from 'express';
+import express, { type Express, type Router } from 'express';
 import { Server as SocketServer } from 'socket.io';
 
+import { createAiDecisionRouter } from './ai/route';
 import { RoomManager } from './rooms';
 import { registerSocketHandlers } from './socket';
 
@@ -20,6 +21,7 @@ export interface GameServer {
 
 export interface GameServerOptions {
   clientRoot?: string;
+  aiRouter?: Router;
 }
 
 export function createGameServer(options: GameServerOptions = {}): GameServer {
@@ -29,6 +31,9 @@ export function createGameServer(options: GameServerOptions = {}): GameServer {
   const rooms = new RoomManager();
   const clientRoot = options.clientRoot ?? resolve(process.cwd(), 'dist/client');
 
+  app.set('trust proxy', 1);
+  app.use(express.json({ limit: '16kb' }));
+  app.use('/api/ai', options.aiRouter ?? createAiDecisionRouter());
   app.get('/healthz', (_request, response) => response.json({ ok: true }));
   app.use(express.static(clientRoot));
   app.get('/{*splat}', async (_request, response) => {
