@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import type { GameAction, LegalActions, PlayerViewPlayer } from '../../shared/types';
 import { RaiseSheet } from './RaiseSheet';
@@ -13,6 +13,7 @@ interface ActionBarProps {
 }
 
 export function ActionBar({ player, turnId, isTurn, actions, opponents, onAction }: ActionBarProps) {
+  const dockRef = useRef<HTMLElement>(null);
   const [raiseOpen, setRaiseOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
   const action = (next: GameAction) => {
@@ -22,7 +23,7 @@ export function ActionBar({ player, turnId, isTurn, actions, opponents, onAction
   };
 
   return (
-    <section className="action-dock" aria-label="操作区">
+    <section ref={dockRef} className="action-dock" aria-label="操作区">
       <div className="action-status">
         <span>{isTurn ? '轮到你了' : '等待对手行动'}</span>
         <small>{player.hasLooked ? '已看牌 · 下注按双倍计算' : '闷牌中 · 下注按基础计算'}</small>
@@ -63,6 +64,7 @@ export function ActionBar({ player, turnId, isTurn, actions, opponents, onAction
       )}
       {raiseOpen && (
         <RaiseSheet
+          anchor={dockRef.current}
           amounts={actions.raiseAmounts}
           multiplier={player.hasLooked ? 2 : 1}
           onChoose={(amount) => action({ type: 'raise', playerId: player.id, amount, turnId })}

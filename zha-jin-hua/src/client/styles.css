@@ -218,8 +218,9 @@ button { -webkit-tap-highlight-color: transparent; }
 .compare-popover { position: absolute; right: 10px; bottom: calc(100% + 8px); display: flex; align-items: center; gap: 6px; padding: 9px; background: var(--felt-950); border: 1px solid var(--gold); box-shadow: 0 10px 28px rgba(0, 0, 0, .4); }
 .compare-popover span { margin-right: 6px; color: var(--ivory-muted); font-size: 11px; }
 
-.sheet-backdrop, .dialog-backdrop, .result-backdrop { position: fixed; z-index: 50; inset: 0; display: grid; place-items: center; background: rgba(1, 10, 8, .76); backdrop-filter: blur(8px); }
-.bottom-sheet { align-self: end; width: min(560px, 100%); padding: 12px 20px calc(20px + var(--safe-bottom)); color: var(--ivory); background: var(--felt-900); border: 1px solid var(--line); border-bottom: 0; }
+.dialog-backdrop, .result-backdrop { position: fixed; z-index: 50; inset: 0; display: grid; place-items: center; background: rgba(1, 10, 8, .76); backdrop-filter: blur(8px); }
+.sheet-backdrop { position: fixed; z-index: 50; inset: 0; background: transparent; }
+.bottom-sheet { position: absolute; left: 50%; width: min(560px, calc(100% - 24px)); padding: 12px 20px 16px; color: var(--ivory); background: var(--felt-900); border: 1px solid var(--line); box-shadow: 0 18px 48px rgba(0, 0, 0, .42); transform: translateX(-50%); }
 .sheet-handle { width: 46px; height: 4px; margin: 0 auto 16px; background: var(--line); border-radius: 99px; }
 .bottom-sheet h2 { margin: 0; font-family: 'Noto Serif SC', serif; }
 .bottom-sheet > p { margin: 5px 0 14px; color: var(--ivory-muted); font-size: 12px; }
@@ -341,6 +342,17 @@ button { -webkit-tap-highlight-color: transparent; }
   .waiting-seats { grid-template-columns: repeat(2, 1fr); }
   .waiting-seat { min-height: 96px; }
   .room-code-display { margin-bottom: 22px; }
+}
+
+@media (max-height: 500px) {
+  .bottom-sheet { padding: 8px 12px 10px; }
+  .sheet-handle { display: none; }
+  .bottom-sheet h2 { font-size: 18px; line-height: 1.1; }
+  .bottom-sheet > p { margin: 2px 0 6px; }
+  .raise-grid { gap: 5px; }
+  .raise-grid button { min-block-size: 40px; padding: 4px 6px; }
+  .raise-grid strong { font-size: 15px; }
+  .sheet-cancel { min-block-size: 40px; margin-top: 5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
