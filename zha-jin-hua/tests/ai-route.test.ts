@@ -19,7 +19,34 @@ function body() {
     ante: 10,
     random: () => 0,
   });
+  state.players[0].cards = [
+    { rank: '2', suit: 'S' },
+    { rank: '7', suit: 'H' },
+    { rank: '9', suit: 'D' },
+  ];
+  state.players[0].hasLooked = true;
+  state.baseBet = 200;
   return buildAiDecisionRequest(state, 'bot', 'cautious', [], 'req-http');
+}
+
+function pressuredPairBody() {
+  const state = createGame({
+    players: [{ id: 'bot', name: '青竹' }, { id: 'you', name: '你' }],
+    startingChips: 1000,
+    ante: 10,
+    random: () => 0,
+  });
+  state.players[0].cards = [
+    { rank: '8', suit: 'S' },
+    { rank: '8', suit: 'H' },
+    { rank: 'K', suit: 'D' },
+  ];
+  state.players[0].hasLooked = true;
+  state.players[1].roundContribution = 80;
+  state.baseBet = 50;
+  return buildAiDecisionRequest(state, 'bot', 'cautious', [
+    { kind: 'action', actorId: 'you', action: 'raise', amount: 50 },
+  ], 'req-pressure');
 }
 
 function foldResult(dialogue = '收。') {
@@ -81,6 +108,34 @@ describe('AI decision route', () => {
       dialogue: '先收一手。',
     });
     expect(gateway.decide).toHaveBeenCalledOnce();
+  });
+
+  it('removes tactical folds before invoking DeepSeek', async () => {
+    const decide = vi.fn<DeepSeekGateway['decide']>((request, _signal, tactics) => {
+      expect(request.legalActions.canFold).toBe(false);
+      expect(request.legalActions.compareTargets).toEqual(['you']);
+      expect(tactics).toMatchObject({
+        aggressorId: 'you',
+        pressure: 'medium',
+        strength: 'strong',
+      });
+      return Promise.resolve({
+        decision: {
+          action: { type: 'compare', targetId: 'you' },
+          dialogue: '你加得勤，我来验牌。',
+        },
+        usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+      });
+    });
+    const { url } = await start({ decide });
+
+    const response = await post(url, pressuredPairBody());
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      requestId: 'req-pressure',
+      action: { type: 'compare', targetId: 'you' },
+    });
   });
 
   it('returns 400 for an invalid body and never calls the gateway', async () => {

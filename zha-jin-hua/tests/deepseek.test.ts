@@ -41,6 +41,29 @@ describe('DeepSeek gateway', () => {
     expect(String(init.body)).not.toContain('deck');
   });
 
+  it('tells the model that tactics already constrained the legal actions', async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({
+      choices: [{ message: { content: '{"action":{"type":"fold"},"dialogue":"这手不跟。"}' } }],
+    }), { status: 200 }));
+    const gateway = createDeepSeekGateway({
+      apiKey: 'test-key', baseUrl: 'https://api.deepseek.com', model: 'deepseek-v4-flash',
+    }, fetchImpl);
+
+    await gateway.decide(request(), new AbortController().signal, {
+      pressure: 'high',
+      aggressorId: 'you',
+      strength: 'competitive',
+    });
+
+    const init = fetchImpl.mock.calls[0][1] as RequestInit;
+    const body = JSON.parse(String(init.body));
+    const system = String(body.messages[0].content);
+    expect(system).toContain('legalActions 已由战术引擎筛选');
+    expect(system).toContain('当前压力：high');
+    expect(system).toContain('主要施压者：you');
+    expect(system).toContain('策略牌力分层：competitive');
+  });
+
   it.each([
     '',
     'not-json',

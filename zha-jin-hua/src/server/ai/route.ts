@@ -1,6 +1,12 @@
 import { Router } from 'express';
 
-import { aiDecisionRequestSchema, intentToGameAction } from '../../ai/contracts';
+import {
+  aiDecisionRequestSchema,
+  intentToGameAction,
+  isLegalIntent,
+  type AiDecisionRequest,
+} from '../../ai/contracts';
+import { buildTacticalPolicy, narrowLegalActions } from '../../ai/tactics';
 import { createDeepSeekGateway, type DeepSeekGateway, type DeepSeekResult } from './deepseek';
 import { CircuitBreaker, FixedWindowLimiter, loadAiRuntimeConfig } from './runtime';
 
@@ -62,8 +68,21 @@ export function createAiDecisionRouter(options: RouteOptions = {}): Router {
     const timeoutSignal = AbortSignal.timeout(config.timeoutMs);
     const signal = AbortSignal.any([timeoutSignal, clientAbort.signal]);
     let result: DeepSeekResult;
+    let tacticalRequest: AiDecisionRequest;
     try {
-      result = await gateway.decide(decisionRequest, signal);
+      const policy = buildTacticalPolicy(decisionRequest);
+      tacticalRequest = {
+        ...decisionRequest,
+        legalActions: narrowLegalActions(decisionRequest.legalActions, policy.safeActions),
+      };
+      result = await gateway.decide(tacticalRequest, signal, {
+        pressure: policy.pressure,
+        aggressorId: policy.aggressorId,
+        strength: policy.strength,
+      });
+      if (!isLegalIntent(result.decision.action, tacticalRequest.legalActions)) {
+        throw new Error('AI_TACTICAL_ACTION_REJECTED');
+      }
     } catch (error) {
       if (clientAbort.signal.aborted) {
         breaker.cancel();
