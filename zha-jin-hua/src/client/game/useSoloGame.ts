@@ -59,12 +59,22 @@ export interface SoloController {
 interface SoloMatchState {
   game: GameState;
   memory: PublicMemoryEntry[];
+  acceptedDecision: {
+    turnId: number;
+    playerId: string;
+    dialogue: string;
+    source: 'deepseek' | 'rule';
+  } | null;
 }
 
 export function useSoloGame(
   decisionService: AiDecisionService = browserAiDecisionService,
 ): SoloController {
-  const [match, setMatch] = useState<SoloMatchState>(() => ({ game: freshMatch(), memory: [] }));
+  const [match, setMatch] = useState<SoloMatchState>(() => ({
+    game: freshMatch(),
+    memory: [],
+    acceptedDecision: null,
+  }));
   const [aiThinkingPlayerId, setAiThinkingPlayerId] = useState<string | null>(null);
   const [aiDialogueByPlayerId, setAiDialogueByPlayerId] = useState<Record<string, string>>({});
   const [aiNotice, setAiNotice] = useState<string | null>(null);
@@ -96,7 +106,23 @@ export function useSoloGame(
     dialogueTimersRef.current.set(playerId, timer);
   }, []);
 
-  useEffect(() => clearDialogueTimers, [clearDialogueTimers]);
+  useEffect(() => () => {
+    generationRef.current += 1;
+    clearDialogueTimers();
+  }, [clearDialogueTimers]);
+
+  useEffect(() => {
+    const accepted = match.acceptedDecision;
+    if (!accepted) {
+      return;
+    }
+
+    showDialogue(accepted.playerId, accepted.dialogue);
+    if (accepted.source === 'rule' && !noticeShownRef.current) {
+      noticeShownRef.current = true;
+      setAiNotice('AI 暂时走神，已由本地策略接管');
+    }
+  }, [match.acceptedDecision, showDialogue]);
 
   useEffect(() => {
     const currentId = state.currentPlayerId;
@@ -141,13 +167,17 @@ export function useSoloGame(
             actorId: currentId,
             text: result.dialogue,
           });
-          return { game: nextGame, memory };
+          return {
+            game: nextGame,
+            memory,
+            acceptedDecision: {
+              turnId: state.turnId,
+              playerId: currentId,
+              dialogue: result.dialogue,
+              source: result.source,
+            },
+          };
         });
-        showDialogue(currentId, result.dialogue);
-        if (result.source === 'rule' && !noticeShownRef.current) {
-          noticeShownRef.current = true;
-          setAiNotice('AI 暂时走神，已由本地策略接管');
-        }
       } catch (error) {
         if (!(error instanceof DOMException && error.name === 'AbortError')) {
           throw error;
@@ -163,7 +193,7 @@ export function useSoloGame(
       window.clearTimeout(timer);
       controller.abort(new DOMException('stale turn', 'AbortError'));
     };
-  }, [decisionService, match.memory, showDialogue, state]);
+  }, [decisionService, match.memory, state]);
 
   const dispatch = useCallback((action: GameAction) => {
     if (action.playerId !== HUMAN_ID) {
@@ -172,13 +202,18 @@ export function useSoloGame(
     setMatch((latest) => ({
       game: applyAction(latest.game, action),
       memory: appendPublicMemory(latest.memory, actionToMemory(action)),
+      acceptedDecision: null,
     }));
   }, []);
 
   const startNextRound = useCallback(() => {
     generationRef.current += 1;
     clearDialogueTimers();
-    setMatch((latest) => ({ game: nextRound(latest.game), memory: latest.memory }));
+    setMatch((latest) => ({
+      game: nextRound(latest.game),
+      memory: latest.memory,
+      acceptedDecision: null,
+    }));
     setAiThinkingPlayerId(null);
     setAiDialogueByPlayerId({});
   }, [clearDialogueTimers]);
@@ -187,7 +222,7 @@ export function useSoloGame(
     generationRef.current += 1;
     clearDialogueTimers();
     noticeShownRef.current = false;
-    setMatch({ game: freshMatch(), memory: [] });
+    setMatch({ game: freshMatch(), memory: [], acceptedDecision: null });
     setAiThinkingPlayerId(null);
     setAiDialogueByPlayerId({});
     setAiNotice(null);

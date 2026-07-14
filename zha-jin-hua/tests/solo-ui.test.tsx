@@ -1,8 +1,13 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from '../src/client/App';
+import type { AiDecisionService, AiTurnDecision } from '../src/client/game/aiDecisionService';
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('solo game UI', () => {
   it('opens a playable solo table from the home screen', async () => {
@@ -38,5 +43,54 @@ describe('solo game UI', () => {
     expect(screen.getByText('豹子')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '关闭规则' }));
     expect(screen.queryByRole('dialog', { name: '玩法规则' })).not.toBeInTheDocument();
+  });
+
+  it('cancels a scheduled solo request when the player exits before it starts', async () => {
+    vi.useFakeTimers();
+    const decide = vi.fn<AiDecisionService['decide']>(() => new Promise<AiTurnDecision>(() => undefined));
+    render(<App soloDecisionService={{ decide }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: '单机对战' }));
+    fireEvent.click(screen.getByRole('button', { name: /^跟注/ }));
+    fireEvent.click(screen.getByRole('button', { name: '退出牌桌' }));
+    await act(async () => vi.advanceTimersByTimeAsync(800));
+
+    expect(decide).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: '单机对战' }));
+    expect(screen.getByRole('button', { name: /^跟注 10$/ })).toBeEnabled();
+    expect(screen.getByText('底池').parentElement?.querySelector('strong')).toHaveTextContent('40');
+  });
+
+  it('aborts a started solo request and starts fresh after leaving the table', async () => {
+    vi.useFakeTimers();
+    let resolveDecision!: (decision: AiTurnDecision) => void;
+    let requestSignal: AbortSignal | undefined;
+    const decide = vi.fn<AiDecisionService['decide']>((_state, _playerId, _style, _memory, signal) => {
+      requestSignal = signal;
+      return new Promise<AiTurnDecision>((resolve) => {
+        resolveDecision = resolve;
+      });
+    });
+    render(<App soloDecisionService={{ decide }} />);
+
+    fireEvent.click(screen.getByRole('button', { name: '单机对战' }));
+    fireEvent.click(screen.getByRole('button', { name: /^跟注/ }));
+    await act(async () => vi.advanceTimersByTimeAsync(800));
+    expect(decide).toHaveBeenCalledTimes(1);
+    expect(requestSignal?.aborted).toBe(false);
+
+    fireEvent.click(screen.getByRole('button', { name: '退出牌桌' }));
+    expect(requestSignal?.aborted).toBe(true);
+    await act(async () => resolveDecision({
+      source: 'rule',
+      action: { type: 'fold', playerId: 'bot-cautious', turnId: 2 },
+      dialogue: '不应留下。',
+    }));
+    await act(async () => vi.advanceTimersByTimeAsync(800));
+
+    expect(decide).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: '单机对战' }));
+    expect(screen.getByRole('button', { name: /^跟注 10$/ })).toBeEnabled();
+    expect(screen.getByText('底池').parentElement?.querySelector('strong')).toHaveTextContent('40');
   });
 });
