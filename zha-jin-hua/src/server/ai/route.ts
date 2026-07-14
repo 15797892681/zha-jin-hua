@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import { aiDecisionRequestSchema, intentToGameAction } from '../../ai/contracts';
-import { createDeepSeekGateway, type DeepSeekGateway } from './deepseek';
+import { createDeepSeekGateway, type DeepSeekGateway, type DeepSeekResult } from './deepseek';
 import { CircuitBreaker, FixedWindowLimiter, loadAiRuntimeConfig } from './runtime';
 
 interface Logger {
@@ -14,6 +14,15 @@ interface RouteOptions {
   gateway?: DeepSeekGateway;
   logger?: Logger;
   now?: () => number;
+  limiter?: FixedWindowLimiter;
+}
+
+function bestEffort(log: () => void): void {
+  try {
+    log();
+  } catch {
+    // Logging must never affect provider health or the HTTP response.
+  }
 }
 
 export function createAiDecisionRouter(options: RouteOptions = {}): Router {
@@ -21,7 +30,7 @@ export function createAiDecisionRouter(options: RouteOptions = {}): Router {
   const config = loadAiRuntimeConfig(env);
   const logger = options.logger ?? console;
   const now = options.now ?? Date.now;
-  const limiter = new FixedWindowLimiter(now);
+  const limiter = options.limiter ?? new FixedWindowLimiter(now);
   const breaker = new CircuitBreaker(config.breakerFailures, config.breakerCooldownMs, now);
   const gateway = options.gateway ?? (config.enabled ? createDeepSeekGateway(config) : undefined);
   const router = Router();
@@ -35,17 +44,36 @@ export function createAiDecisionRouter(options: RouteOptions = {}): Router {
     const ip = request.ip || request.socket.remoteAddress || 'unknown';
     if (!config.enabled || !gateway) return response.status(503).json({ code: 'AI_DISABLED' });
     if (
-      !limiter.take(`ip:${ip}`, config.perIpPerMinute, 60_000)
-      || !limiter.take('global', config.globalPerHour, 3_600_000)
+      !limiter.take('global', config.globalPerHour, 3_600_000)
+      || !limiter.take(`ip:${ip}`, config.perIpPerMinute, 60_000)
     ) {
       return response.status(429).json({ code: 'AI_RATE_LIMITED' });
     }
     if (!breaker.canRequest()) return response.status(503).json({ code: 'AI_CIRCUIT_OPEN' });
 
+    const signal = AbortSignal.timeout(config.timeoutMs);
+    let result: DeepSeekResult;
     try {
-      const result = await gateway.decide(decisionRequest, AbortSignal.timeout(config.timeoutMs));
-      breaker.success();
-      const action = intentToGameAction(result.decision.action, decisionRequest);
+      result = await gateway.decide(decisionRequest, signal);
+    } catch (error) {
+      breaker.failure();
+      const timedOut = error instanceof DOMException && error.name === 'TimeoutError';
+      bestEffort(() => {
+        logger.warn('ai_decision', {
+          requestId: decisionRequest.requestId,
+          latencyMs: now() - startedAt,
+          model: config.model,
+          status: timedOut ? 'timeout' : 'provider_error',
+        });
+      });
+      return response.status(timedOut ? 504 : 502).json({
+        code: timedOut ? 'AI_TIMEOUT' : 'AI_PROVIDER_ERROR',
+      });
+    }
+
+    breaker.success();
+    const action = intentToGameAction(result.decision.action, decisionRequest);
+    bestEffort(() => {
       logger.info('ai_decision', {
         requestId: decisionRequest.requestId,
         latencyMs: now() - startedAt,
@@ -53,26 +81,14 @@ export function createAiDecisionRouter(options: RouteOptions = {}): Router {
         totalTokens: result.usage.totalTokens,
         status: 'ok',
       });
-      return response.json({
-        requestId: decisionRequest.requestId,
-        turnId: decisionRequest.turnId,
-        playerId: decisionRequest.playerId,
-        action,
-        dialogue: result.decision.dialogue,
-      });
-    } catch (error) {
-      breaker.failure();
-      const timedOut = error instanceof DOMException && error.name === 'TimeoutError';
-      logger.warn('ai_decision', {
-        requestId: decisionRequest.requestId,
-        latencyMs: now() - startedAt,
-        model: config.model,
-        status: timedOut ? 'timeout' : 'provider_error',
-      });
-      return response.status(timedOut ? 504 : 502).json({
-        code: timedOut ? 'AI_TIMEOUT' : 'AI_PROVIDER_ERROR',
-      });
-    }
+    });
+    return response.json({
+      requestId: decisionRequest.requestId,
+      turnId: decisionRequest.turnId,
+      playerId: decisionRequest.playerId,
+      action,
+      dialogue: result.decision.dialogue,
+    });
   });
 
   return router;

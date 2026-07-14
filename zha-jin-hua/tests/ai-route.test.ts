@@ -5,8 +5,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { buildAiDecisionRequest } from '../src/ai/context';
 import type { AiDecisionRequest } from '../src/ai/contracts';
-import type { DeepSeekGateway } from '../src/server/ai/deepseek';
+import type { DeepSeekGateway, DeepSeekResult } from '../src/server/ai/deepseek';
 import { createAiDecisionRouter } from '../src/server/ai/route';
+import { FixedWindowLimiter } from '../src/server/ai/runtime';
 import { createGameServer, type GameServer } from '../src/server/index';
 import { createGame } from '../src/shared/game';
 
@@ -39,11 +40,13 @@ describe('AI decision route', () => {
     gateway: DeepSeekGateway,
     overrides: Record<string, string> = {},
     logger = { info: vi.fn(), warn: vi.fn() },
+    runtime: { now?: () => number; limiter?: FixedWindowLimiter } = {},
   ) {
     const router = createAiDecisionRouter({
       gateway,
       env: { DEEPSEEK_API_KEY: 'test-only', ...overrides },
       logger,
+      ...runtime,
     });
     server = createGameServer({ aiRouter: router });
     await server.start(0);
@@ -51,10 +54,13 @@ describe('AI decision route', () => {
     return { url: `http://127.0.0.1:${port}/api/ai/decision`, logger };
   }
 
-  function post(url: string, value: unknown = body()) {
+  function post(url: string, value: unknown = body(), forwardedFor?: string) {
     return fetch(url, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        ...(forwardedFor ? { 'x-forwarded-for': forwardedFor } : {}),
+      },
       body: JSON.stringify(value),
     });
   }
@@ -73,6 +79,7 @@ describe('AI decision route', () => {
       action: { type: 'fold', playerId: 'bot', turnId: 1 },
       dialogue: '先收一手。',
     });
+    expect(gateway.decide).toHaveBeenCalledOnce();
   });
 
   it('returns 400 for an invalid body and never calls the gateway', async () => {
@@ -93,12 +100,39 @@ describe('AI decision route', () => {
     expect((await post(url)).status).toBe(429);
   });
 
+  it('uses forwarded client IPs from the trusted loopback test peer', async () => {
+    const gateway: DeepSeekGateway = { decide: vi.fn().mockResolvedValue(foldResult()) };
+    const { url } = await start(gateway, { AI_MAX_REQUESTS_PER_MINUTE_PER_IP: '1' });
+
+    expect((await post(url, body(), '198.51.100.1')).status).toBe(200);
+    expect((await post(url, body(), '198.51.100.2')).status).toBe(200);
+    expect((await post(url, body(), '198.51.100.1')).status).toBe(429);
+  });
+
   it('returns 429 after the global limit', async () => {
     const gateway: DeepSeekGateway = { decide: vi.fn().mockResolvedValue(foldResult()) };
     const { url } = await start(gateway, { AI_MAX_REQUESTS_PER_HOUR: '1' });
 
     expect((await post(url)).status).toBe(200);
     expect((await post(url)).status).toBe(429);
+  });
+
+  it('does not allocate per-IP state for globally rejected unique IPs', async () => {
+    const gateway: DeepSeekGateway = { decide: vi.fn().mockResolvedValue(foldResult()) };
+    const limiter = new FixedWindowLimiter();
+    const { url } = await start(
+      gateway,
+      { AI_MAX_REQUESTS_PER_HOUR: '1' },
+      undefined,
+      { limiter },
+    );
+
+    expect((await post(url, body(), '198.51.100.1')).status).toBe(200);
+    expect(limiter.sizeForTesting).toBe(2);
+    for (let index = 2; index <= 10; index += 1) {
+      expect((await post(url, body(), `198.51.100.${index}`)).status).toBe(429);
+    }
+    expect(limiter.sizeForTesting).toBe(2);
   });
 
   it('rejects JSON bodies larger than 16 KB before calling the gateway', async () => {
@@ -124,6 +158,62 @@ describe('AI decision route', () => {
     expect(response.status).toBe(504);
   });
 
+  it('returns 502 for three provider failures then opens without a fourth call', async () => {
+    const gateway: DeepSeekGateway = { decide: vi.fn().mockRejectedValue(new Error('provider down')) };
+    const { url } = await start(gateway);
+
+    expect((await post(url)).status).toBe(502);
+    expect((await post(url)).status).toBe(502);
+    expect((await post(url)).status).toBe(502);
+    expect((await post(url)).status).toBe(503);
+    expect(gateway.decide).toHaveBeenCalledTimes(3);
+  });
+
+  it('permits only one provider probe after circuit cooldown', async () => {
+    let now = 1000;
+    let rejectProbe!: (reason: Error) => void;
+    const gateway: DeepSeekGateway = {
+      decide: vi.fn()
+        .mockRejectedValueOnce(new Error('provider down'))
+        .mockImplementationOnce(() => new Promise<DeepSeekResult>((_resolve, reject) => {
+          rejectProbe = reject;
+        })),
+    };
+    const { url } = await start(
+      gateway,
+      { AI_CIRCUIT_BREAKER_FAILURES: '1', AI_CIRCUIT_BREAKER_COOLDOWN_MS: '30000' },
+      undefined,
+      { now: () => now },
+    );
+
+    expect((await post(url)).status).toBe(502);
+    expect((await post(url)).status).toBe(503);
+    now += 30_001;
+    const probe = post(url);
+    await vi.waitFor(() => expect(gateway.decide).toHaveBeenCalledTimes(2));
+    expect((await post(url)).status).toBe(503);
+    rejectProbe(new Error('probe failed'));
+    expect((await probe).status).toBe(502);
+    expect(gateway.decide).toHaveBeenCalledTimes(2);
+  });
+
+  it('resets accumulated provider failures after a success', async () => {
+    const gateway: DeepSeekGateway = {
+      decide: vi.fn()
+        .mockRejectedValueOnce(new Error('first failure'))
+        .mockResolvedValueOnce(foldResult())
+        .mockRejectedValue(new Error('later failure')),
+    };
+    const { url } = await start(gateway, { AI_CIRCUIT_BREAKER_FAILURES: '2' });
+
+    expect((await post(url)).status).toBe(502);
+    expect((await post(url)).status).toBe(200);
+    expect((await post(url)).status).toBe(502);
+    expect((await post(url)).status).toBe(502);
+    expect((await post(url)).status).toBe(503);
+    expect(gateway.decide).toHaveBeenCalledTimes(4);
+  });
+
   it('logs only sanitized operational fields', async () => {
     const gateway: DeepSeekGateway = { decide: vi.fn().mockResolvedValue(foldResult()) };
     const logger = { info: vi.fn(), warn: vi.fn() };
@@ -136,6 +226,47 @@ describe('AI decision route', () => {
     expect(event).toBe('ai_decision');
     expect(Object.keys(fields)).toEqual(['requestId', 'latencyMs', 'model', 'totalTokens', 'status']);
     const serialized = JSON.stringify(logger.info.mock.calls);
-    expect(serialized).not.toMatch(/cards|prompt|DEEPSEEK_API_KEY|test-only|先收一手/);
+    expect(serialized).not.toMatch(/cards|prompt|DEEPSEEK_API_KEY|test-only|收。/);
+  });
+
+  it('logs provider failures with only sanitized operational fields', async () => {
+    const gateway: DeepSeekGateway = { decide: vi.fn().mockRejectedValue(new Error('provider down')) };
+    const logger = { info: vi.fn(), warn: vi.fn() };
+    const { url } = await start(gateway, {}, logger);
+
+    expect((await post(url)).status).toBe(502);
+
+    expect(logger.warn).toHaveBeenCalledOnce();
+    const [event, fields] = logger.warn.mock.calls[0];
+    expect(event).toBe('ai_decision');
+    expect(Object.keys(fields)).toEqual(['requestId', 'latencyMs', 'model', 'status']);
+    expect(JSON.stringify(logger.warn.mock.calls))
+      .not.toMatch(/cards|prompt|DEEPSEEK_API_KEY|test-only|provider down/);
+  });
+
+  it('keeps successful responses and the circuit healthy when info logging throws', async () => {
+    const gateway: DeepSeekGateway = { decide: vi.fn().mockResolvedValue(foldResult()) };
+    const logger = {
+      info: vi.fn(() => { throw new Error('logger unavailable'); }),
+      warn: vi.fn(),
+    };
+    const { url } = await start(gateway, { AI_CIRCUIT_BREAKER_FAILURES: '1' }, logger);
+
+    expect((await post(url)).status).toBe(200);
+    expect((await post(url)).status).toBe(200);
+    expect(gateway.decide).toHaveBeenCalledTimes(2);
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
+
+  it('preserves provider error responses when warning logging throws', async () => {
+    const gateway: DeepSeekGateway = { decide: vi.fn().mockRejectedValue(new Error('provider down')) };
+    const logger = {
+      info: vi.fn(),
+      warn: vi.fn(() => { throw new Error('logger unavailable'); }),
+    };
+    const { url } = await start(gateway, {}, logger);
+
+    expect((await post(url)).status).toBe(502);
+    expect(gateway.decide).toHaveBeenCalledOnce();
   });
 });

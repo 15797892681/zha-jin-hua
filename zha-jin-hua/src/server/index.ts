@@ -31,7 +31,7 @@ export function createGameServer(options: GameServerOptions = {}): GameServer {
   const rooms = new RoomManager();
   const clientRoot = options.clientRoot ?? resolve(process.cwd(), 'dist/client');
 
-  app.set('trust proxy', 1);
+  app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
   app.use(express.json({ limit: '16kb' }));
   app.use('/api/ai', options.aiRouter ?? createAiDecisionRouter());
   app.get('/healthz', (_request, response) => response.json({ ok: true }));

@@ -19,6 +19,14 @@ describe('AI runtime protection', () => {
     expect(loadAiRuntimeConfig({ AI_ENABLED: 'true' }).enabled).toBe(false);
   });
 
+  it('falls back when a numeric setting is not a positive safe integer', () => {
+    expect(loadAiRuntimeConfig({
+      DEEPSEEK_API_KEY: 'secret',
+      AI_TIMEOUT_MS: '0.5',
+      AI_MAX_REQUESTS_PER_HOUR: `${Number.MAX_SAFE_INTEGER + 1}`,
+    })).toMatchObject({ timeoutMs: 3000, globalPerHour: 300 });
+  });
+
   it('resets a fixed window after its duration', () => {
     let now = 1000;
     const limiter = new FixedWindowLimiter(() => now);
@@ -27,6 +35,20 @@ describe('AI runtime protection', () => {
     expect(limiter.take('ip:a', 2, 60_000)).toBe(false);
     now += 60_001;
     expect(limiter.take('ip:a', 2, 60_000)).toBe(true);
+  });
+
+  it('evicts expired unique-key windows while accepting new traffic', () => {
+    let now = 1000;
+    const limiter = new FixedWindowLimiter(() => now);
+    limiter.take('ip:a', 1, 60_000);
+    limiter.take('ip:b', 1, 60_000);
+    limiter.take('ip:c', 1, 60_000);
+    expect(limiter.sizeForTesting).toBe(3);
+
+    now += 60_001;
+    limiter.take('ip:fresh', 1, 60_000);
+
+    expect(limiter.sizeForTesting).toBe(1);
   });
 
   it('opens after three failures and permits only one probe after cooldown', () => {

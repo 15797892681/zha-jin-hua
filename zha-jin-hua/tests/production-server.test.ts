@@ -30,6 +30,22 @@ describe('production web server', () => {
     if (clientRoot) await rm(clientRoot, { recursive: true, force: true });
   });
 
+  it('trusts forwarded addresses only from loopback, link-local, and private peers', () => {
+    server = createGameServer({ aiRouter: createAiDecisionRouter({ env: {} }) });
+    const trust = server.app.get('trust proxy fn') as (address: string, index: number) => boolean;
+
+    for (const address of [
+      '127.0.0.1', '::1',
+      '169.254.10.20', 'fe80::1',
+      '10.0.0.1', '172.16.0.1', '192.168.1.1', 'fc00::1',
+    ]) {
+      expect(trust(address, 0), address).toBe(true);
+    }
+    for (const address of ['8.8.8.8', '198.51.100.20', '2001:4860:4860::8888']) {
+      expect(trust(address, 0), address).toBe(false);
+    }
+  });
+
   it('serves health, built assets, and the SPA fallback from one process', async () => {
     clientRoot = await mkdtemp(join(tmpdir(), 'zjh-client-'));
     await mkdir(join(clientRoot, 'assets'));

@@ -12,7 +12,7 @@ export interface AiRuntimeConfig {
 
 function positive(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 export function loadAiRuntimeConfig(env: Record<string, string | undefined>): AiRuntimeConfig {
@@ -32,20 +32,31 @@ export function loadAiRuntimeConfig(env: Record<string, string | undefined>): Ai
 }
 
 export class FixedWindowLimiter {
-  private readonly windows = new Map<string, { startedAt: number; count: number }>();
+  private readonly windows = new Map<string, { expiresAt: number; count: number }>();
 
   constructor(private readonly now: () => number = Date.now) {}
 
+  get sizeForTesting(): number {
+    return this.windows.size;
+  }
+
   take(key: string, limit: number, windowMs: number): boolean {
     const current = this.now();
+    this.prune(current);
     const window = this.windows.get(key);
-    if (!window || current - window.startedAt >= windowMs) {
-      this.windows.set(key, { startedAt: current, count: 1 });
+    if (!window) {
+      this.windows.set(key, { expiresAt: current + windowMs, count: 1 });
       return true;
     }
     if (window.count >= limit) return false;
     window.count += 1;
     return true;
+  }
+
+  private prune(current: number): void {
+    for (const [key, window] of this.windows) {
+      if (window.expiresAt <= current) this.windows.delete(key);
+    }
   }
 }
 
