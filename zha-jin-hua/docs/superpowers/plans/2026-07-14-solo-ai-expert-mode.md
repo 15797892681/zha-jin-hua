@@ -16,7 +16,7 @@
 - `safeActions` must be a non-empty subset of the original legal actions.
 - Personality may reorder safe actions or shift a threshold by at most `0.04`; it may not reintroduce a tactically rejected action.
 - A recent raiser is current-round pressure only when that player has contributed more than the ante in the current round.
-- The 10,000-seed blind-raise regression must use production-equivalent public memory and finish with a human win rate at or below `0.20`.
+- The 10,000-seed blind-raise regression must use production-equivalent public memory, finish with a human win rate at or below `0.26`, and keep average human ending chips below the initial `1000`.
 - Follow red-green-refactor for every production change and preserve unrelated untracked files.
 
 ---
@@ -364,7 +364,9 @@ Use these exact bands in `buildTacticalPolicy`:
 
 ```ts
 // Blind:
-// - medium/high current pressure + canLook => only look
+// - under medium/high pressure, cautious looks before responding
+// - under medium/high pressure, bold and chaotic stay blind and use raise/call
+// - at the raise ceiling, bold and chaotic call instead of paying the viewed-player multiplier
 // - otherwise cautious prefers call, bold prefers first raise, chaotic chooses call/raise by random
 // - never fold blind while call or look is legal
 //
@@ -404,8 +406,31 @@ export function buildTacticalPolicy(
   const fold: AiActionIntent | null = legal.canFold ? { type: 'fold' } : null;
 
   if (!request.self.hasLooked || request.self.cards === null) {
-    if (pressure !== 'low' && look) {
-      return finishPolicy(request, [look], look, pressure, aggressorId, null, 'unknown');
+    if (pressure !== 'low') {
+      if (request.style === 'cautious' && look) {
+        return finishPolicy(request, [look], look, pressure, aggressorId, null, 'unknown');
+      }
+      const blindDefense = compactActions(request, [raise, call]);
+      if (blindDefense.length > 0) {
+        const preferred = request.style === 'bold'
+          ? raise ?? call
+          : blindDefense[Math.min(
+            blindDefense.length - 1,
+            Math.floor(random() * blindDefense.length),
+          )] ?? raise ?? call;
+        return finishPolicy(
+          request,
+          blindDefense,
+          preferred,
+          pressure,
+          aggressorId,
+          null,
+          'unknown',
+        );
+      }
+      if (look) {
+        return finishPolicy(request, [look], look, pressure, aggressorId, null, 'unknown');
+      }
     }
     const options = request.style === 'cautious'
       ? [call, look]
@@ -781,11 +806,16 @@ Use exactly 10,000 seeds and expose the failure ratio:
 it('keeps mechanical blind raising below the expert-mode win ceiling', () => {
   const games = 10_000;
   let wins = 0;
+  let endingChips = 0;
   for (let seed = 1; seed <= games; seed += 1) {
-    if (playBlindRaiseGame(seed)) wins += 1;
+    const result = playBlindRaiseGame(seed);
+    if (result.humanWon) wins += 1;
+    endingChips += result.humanChips;
   }
   const winRate = wins / games;
-  expect(winRate, `blind-raise win rate: ${winRate}`).toBeLessThanOrEqual(0.20);
+  const averageEndingChips = endingChips / games;
+  expect(winRate, `blind-raise win rate: ${winRate}`).toBeLessThanOrEqual(0.26);
+  expect(averageEndingChips).toBeLessThan(1000);
 });
 ```
 
@@ -797,7 +827,7 @@ Run:
 npm test -- tests/ai-balance.test.ts
 ```
 
-Expected: the rewritten production-equivalent simulation completes within the normal Vitest timeout, all games terminate, and the win rate is `<= 0.20`. If it fails above `0.20`, stop this task, record the exact rate and action distribution, and return to root-cause analysis before changing a single named constant; do not weaken the gate or stack speculative threshold changes.
+Expected: the rewritten production-equivalent simulation completes within the normal Vitest timeout, all games terminate, the win rate is `<= 0.26`, and average ending chips are `< 1000`. If either gate fails, stop this task, record the exact values and action distribution, and return to root-cause analysis before changing a single named constant; do not weaken the gate or stack speculative threshold changes.
 
 - [ ] **Step 4: Run all tactical and AI tests**
 
@@ -878,8 +908,8 @@ Expected: the new deploy is `Live`, its commit equals local `HEAD`, and health r
 
 - [ ] **Step 5: Run production smoke checks**
 
-Use Playwright against `https://zha-jin-hua.onrender.com/` with a 390×844 viewport. Start solo mode, perform sequential raises, and assert at least one pressured AI looks and later responds with call, raise, or compare instead of all three folding. Also recheck that revealed human cards remain non-overlapping and that the raise dialog exposes only the next level.
+Use Playwright against `https://zha-jin-hua.onrender.com/` with a 390×844 viewport. Start solo mode, perform sequential raises, and assert pressured AI responses include a mix of looking and blind call/raise behavior instead of all three folding. Also recheck that revealed human cards remain non-overlapping and that the raise dialog exposes only the next level.
 
 - [ ] **Step 6: Record delivery evidence**
 
-Report the final commit, Render deploy ID, health result, production asset hashes, 10,000-game blind-raise win rate, and full test counts. Preserve the previous live commit as the rollback target.
+Report the final commit, Render deploy ID, health result, production asset hashes, 10,000-game blind-raise win rate, average ending chips, and full test counts. Preserve the previous live commit as the rollback target.

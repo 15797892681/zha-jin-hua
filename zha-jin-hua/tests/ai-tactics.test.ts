@@ -84,6 +84,60 @@ describe('expert AI tactics', () => {
     expect(policy.safeActions).toEqual([{ type: 'look' }]);
   });
 
+  it('lets a bold player defend blind pressure with a counter-raise', () => {
+    const value = request({
+      hand: null,
+      style: 'bold',
+      baseBet: 20,
+      humanContribution: 30,
+      memory: [{ kind: 'action', actorId: 'you', action: 'raise', amount: 20 }],
+    });
+
+    const policy = buildTacticalPolicy(value, () => 0);
+    const narrowed = narrowLegalActions(value.legalActions, policy.safeActions);
+
+    expect(policy.preferredAction).toEqual({ type: 'raise', amount: 50 });
+    expect(policy.safeActions).not.toContainEqual({ type: 'look' });
+    expect(policy.safeActions).not.toContainEqual({ type: 'fold' });
+    expect(narrowed.canLook).toBe(false);
+    expect(narrowed.raiseAmounts).toEqual([50]);
+  });
+
+  it('lets a chaotic player vary blind defense between raising and calling', () => {
+    const value = request({
+      hand: null,
+      style: 'chaotic',
+      baseBet: 20,
+      humanContribution: 30,
+      memory: [{ kind: 'action', actorId: 'you', action: 'raise', amount: 20 }],
+    });
+
+    const raisePolicy = buildTacticalPolicy(value, () => 0);
+    const callPolicy = buildTacticalPolicy(value, () => 0.999);
+
+    expect(raisePolicy.preferredAction).toEqual({ type: 'raise', amount: 50 });
+    expect(callPolicy.preferredAction).toEqual({ type: 'call' });
+    expect(raisePolicy.safeActions).toEqual([
+      { type: 'raise', amount: 50 },
+      { type: 'call' },
+    ]);
+  });
+
+  it('calls instead of looking when a bold blind defender reaches the raise ceiling', () => {
+    const value = request({
+      hand: null,
+      style: 'bold',
+      baseBet: 200,
+      humanContribution: 380,
+      memory: [{ kind: 'action', actorId: 'you', action: 'raise', amount: 200 }],
+    });
+
+    const policy = buildTacticalPolicy(value, () => 0);
+
+    expect(policy.preferredAction).toEqual({ type: 'call' });
+    expect(policy.safeActions).toEqual([{ type: 'call' }]);
+  });
+
   it('does not treat an old-round raise as current pressure', () => {
     const value = request({
       hand: null,
@@ -108,6 +162,20 @@ describe('expert AI tactics', () => {
     expect(policy.preferredAction).toEqual({ type: 'compare', targetId: 'you' });
     expect(narrowed.canFold).toBe(false);
     expect(narrowed.compareTargets).toEqual(['you']);
+  });
+
+  it('compares with the aggressor when pressure reaches the raise ceiling', () => {
+    const value = request({
+      hand: '8S 8H KD',
+      baseBet: 200,
+      humanContribution: 380,
+      memory: [{ kind: 'action', actorId: 'you', action: 'raise', amount: 200 }],
+    });
+
+    expect(buildTacticalPolicy(value, () => 0).preferredAction).toEqual({
+      type: 'compare',
+      targetId: 'you',
+    });
   });
 
   it('still folds a weak viewed hand when the price is bad', () => {

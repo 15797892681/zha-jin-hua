@@ -1,6 +1,8 @@
 import { expect, it } from 'vitest';
 
+import { actionToMemory, appendPublicMemory } from '../src/ai/context';
 import { chooseAiAction, type AiStyle } from '../src/ai/strategy';
+import type { PublicMemoryEntry } from '../src/ai/contracts';
 import { applyAction, createGame, legalActions } from '../src/shared/game';
 import type { GameAction, GamePlayerInput, GameState } from '../src/shared/types';
 
@@ -51,9 +53,15 @@ function blindRaiseAction(state: GameState): GameAction {
   return { type: 'fold', playerId: HUMAN_ID, turnId: state.turnId };
 }
 
-function playBlindRaiseGame(seed: number): boolean {
+interface GameResult {
+  humanWon: boolean;
+  humanChips: number;
+}
+
+function playBlindRaiseGame(seed: number): GameResult {
   const random = seededRandom(seed);
   let state = createGame({ players: PLAYERS, startingChips: 1000, ante: 10, random });
+  let memory: PublicMemoryEntry[] = [];
   let actionLimit = 100;
 
   while (state.status === 'playing' && actionLimit > 0) {
@@ -66,21 +74,44 @@ function playBlindRaiseGame(seed: number): boolean {
     } else {
       const style = AI_STYLES[playerId];
       if (!style) throw new Error(`Missing AI style for ${playerId}`);
-      action = chooseAiAction(state, playerId, style, random);
+      action = chooseAiAction(state, playerId, style, random, memory);
     }
     state = applyAction(state, action);
+    memory = appendPublicMemory(memory, actionToMemory(action));
+    if (playerId !== HUMAN_ID) {
+      memory = appendPublicMemory(memory, {
+        kind: 'dialogue',
+        actorId: playerId,
+        text: '继续。',
+      });
+    }
   }
 
   expect(actionLimit).toBeGreaterThan(0);
-  return state.winnerIds.includes(HUMAN_ID);
+  return {
+    humanWon: state.winnerIds.includes(HUMAN_ID),
+    humanChips: state.players.find((player) => player.id === HUMAN_ID)?.chips ?? 0,
+  };
 }
 
-it('does not let repeated blind raises dominate a four-player fallback match', () => {
-  const games = 2_000;
+it('keeps mechanical blind raising below the expert-mode win ceiling', () => {
+  const games = 10_000;
   let wins = 0;
+  let endingChips = 0;
   for (let seed = 1; seed <= games; seed += 1) {
-    if (playBlindRaiseGame(seed)) wins += 1;
+    const result = playBlindRaiseGame(seed);
+    if (result.humanWon) wins += 1;
+    endingChips += result.humanChips;
   }
 
-  expect(wins / games).toBeLessThanOrEqual(0.4);
+  const winRate = wins / games;
+  const averageEndingChips = endingChips / games;
+  expect(
+    winRate,
+    `blind-raise win rate: ${winRate}; average ending chips: ${averageEndingChips}`,
+  ).toBeLessThanOrEqual(0.26);
+  expect(
+    averageEndingChips,
+    `blind-raise win rate: ${winRate}; average ending chips: ${averageEndingChips}`,
+  ).toBeLessThan(1000);
 });

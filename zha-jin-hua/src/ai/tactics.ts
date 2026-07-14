@@ -219,8 +219,31 @@ export function buildTacticalPolicy(
   const fold: AiActionIntent | null = legal.canFold ? { type: 'fold' } : null;
 
   if (!request.self.hasLooked || request.self.cards === null) {
-    if (pressure !== 'low' && look) {
-      return finishPolicy(request, [look], look, pressure, aggressorId, null, 'unknown');
+    if (pressure !== 'low') {
+      if (request.style === 'cautious' && look) {
+        return finishPolicy(request, [look], look, pressure, aggressorId, null, 'unknown');
+      }
+      const blindDefense = compactActions(request, [raise, call]);
+      if (blindDefense.length > 0) {
+        const randomValue = Math.min(0.999_999, Math.max(0, random()));
+        const preferred = request.style === 'bold'
+          ? raise ?? call
+          : blindDefense[
+            Math.min(blindDefense.length - 1, Math.floor(randomValue * blindDefense.length))
+          ] ?? raise ?? call;
+        return finishPolicy(
+          request,
+          blindDefense,
+          preferred,
+          pressure,
+          aggressorId,
+          null,
+          'unknown',
+        );
+      }
+      if (look) {
+        return finishPolicy(request, [look], look, pressure, aggressorId, null, 'unknown');
+      }
     }
     const options = request.style === 'cautious'
       ? [call, look]
