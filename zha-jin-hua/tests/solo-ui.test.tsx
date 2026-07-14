@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../src/client/App';
 import type { AiDecisionService, AiTurnDecision } from '../src/client/game/aiDecisionService';
 
+const AI_PACING_RANDOM = 0.999; // Valid [0, 1) input that rounds the AI delay to 800 ms.
+
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
@@ -37,7 +39,7 @@ describe('solo game UI', () => {
 
   it('shows thinking and exposes validated dialogue to assistive technology', async () => {
     vi.useFakeTimers();
-    vi.spyOn(Math, 'random').mockReturnValue(1);
+    vi.spyOn(Math, 'random').mockReturnValue(AI_PACING_RANDOM);
     let resolveDecision!: (value: Awaited<ReturnType<AiDecisionService['decide']>>) => void;
     const service: AiDecisionService = {
       decide: vi.fn(() => new Promise<AiTurnDecision>((resolve) => { resolveDecision = resolve; })),
@@ -63,7 +65,7 @@ describe('solo game UI', () => {
 
   it('prefers thinking feedback over lingering dialogue in the matching seat', async () => {
     vi.useFakeTimers();
-    vi.spyOn(Math, 'random').mockReturnValue(1);
+    vi.spyOn(Math, 'random').mockReturnValue(AI_PACING_RANDOM);
     let decisionCount = 0;
     const service: AiDecisionService = {
       decide: vi.fn((state, playerId) => {
@@ -94,7 +96,7 @@ describe('solo game UI', () => {
 
   it('renders one degradation notice across consecutive fallback turns', async () => {
     vi.useFakeTimers();
-    vi.spyOn(Math, 'random').mockReturnValue(1);
+    vi.spyOn(Math, 'random').mockReturnValue(AI_PACING_RANDOM);
     const service: AiDecisionService = {
       decide: vi.fn(async (state, playerId) => ({
         source: 'rule' as const,
