@@ -1,0 +1,31 @@
+{
+  "id": "fix-raise-popover-clipping",
+  "name": "fix-raise-popover-clipping",
+  "title": "修复加注浮层被遮挡",
+  "description": "将加注面板改为操作栏上方的轻量浮层，避免被底部或父容器裁剪",
+  "status": "completed",
+  "dev_type": "frontend",
+  "scope": "game-ui",
+  "package": null,
+  "priority": "P2",
+  "creator": "linruibiao",
+  "assignee": "linruibiao",
+  "createdAt": "2026-07-14",
+  "completedAt": "2026-07-14",
+  "branch": null,
+  "base_branch": "codex/zha-jin-hua",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    "src/client/components/ActionBar.tsx",
+    "src/client/components/RaiseSheet.tsx",
+    "src/client/styles.css",
+    "e2e/responsive.spec.ts"
+  ],
+  "notes": "",
+  "meta": {}
+}
