@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -7,6 +7,7 @@ import type { AiDecisionService, AiTurnDecision } from '../src/client/game/aiDec
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 describe('solo game UI', () => {
@@ -36,6 +37,7 @@ describe('solo game UI', () => {
 
   it('shows thinking and exposes validated dialogue to assistive technology', async () => {
     vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(1);
     let resolveDecision!: (value: Awaited<ReturnType<AiDecisionService['decide']>>) => void;
     const service: AiDecisionService = {
       decide: vi.fn(() => new Promise<AiTurnDecision>((resolve) => { resolveDecision = resolve; })),
@@ -44,17 +46,55 @@ describe('solo game UI', () => {
     fireEvent.click(screen.getByRole('button', { name: '单机对战' }));
     fireEvent.click(screen.getByRole('button', { name: /跟注 10/ }));
     await act(async () => vi.advanceTimersByTimeAsync(800));
-    expect(screen.getByText('正在思考…')).toBeInTheDocument();
+    const cautiousSeat = screen.getByRole('article', { name: /青竹/ });
+    const thinking = screen.getByText('正在思考…');
+    expect(cautiousSeat).toContainElement(thinking);
     await act(async () => resolveDecision({
       source: 'deepseek',
       action: { type: 'fold', playerId: 'bot-cautious', turnId: 2 },
       dialogue: '这轮先观察。',
     }));
-    expect(screen.getByText('这轮先观察。')).toHaveAttribute('aria-live', 'polite');
+    const dialogue = screen.getByText('这轮先观察。');
+    expect(cautiousSeat).toContainElement(dialogue);
+    expect(dialogue).toHaveAttribute('aria-live', 'polite');
+    await act(async () => vi.advanceTimersByTimeAsync(3500));
+    expect(screen.queryByText('这轮先观察。')).not.toBeInTheDocument();
+  });
+
+  it('prefers thinking feedback over lingering dialogue in the matching seat', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(1);
+    let decisionCount = 0;
+    const service: AiDecisionService = {
+      decide: vi.fn((state, playerId) => {
+        decisionCount += 1;
+        if (decisionCount === 4) {
+          return new Promise<AiTurnDecision>(() => undefined);
+        }
+        return Promise.resolve({
+          source: 'deepseek' as const,
+          action: { type: 'call' as const, playerId, turnId: state.turnId },
+          dialogue: `${playerId}对白`,
+        });
+      }),
+    };
+    render(<App soloDecisionService={service} />);
+    fireEvent.click(screen.getByRole('button', { name: '单机对战' }));
+    fireEvent.click(screen.getByRole('button', { name: /跟注 10/ }));
+    await act(async () => vi.advanceTimersByTimeAsync(800));
+    await act(async () => vi.advanceTimersByTimeAsync(800));
+    await act(async () => vi.advanceTimersByTimeAsync(800));
+    fireEvent.click(screen.getByRole('button', { name: /跟注 10/ }));
+    await act(async () => vi.advanceTimersByTimeAsync(800));
+
+    const cautiousSeat = screen.getByRole('article', { name: /青竹/ });
+    expect(within(cautiousSeat).getByText('正在思考…')).toBeInTheDocument();
+    expect(screen.queryByText('bot-cautious对白')).not.toBeInTheDocument();
   });
 
   it('renders one degradation notice across consecutive fallback turns', async () => {
     vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(1);
     const service: AiDecisionService = {
       decide: vi.fn(async (state, playerId) => ({
         source: 'rule' as const,
@@ -69,7 +109,9 @@ describe('solo game UI', () => {
     await act(async () => vi.advanceTimersByTimeAsync(800));
     await act(async () => vi.advanceTimersByTimeAsync(800));
     expect(service.decide).toHaveBeenCalledTimes(2);
-    expect(screen.getAllByText('AI 暂时走神，已由本地策略接管')).toHaveLength(1);
+    const notices = screen.getAllByText('AI 暂时走神，已由本地策略接管');
+    expect(notices).toHaveLength(1);
+    expect(notices[0].closest('.felt-table')).toBeNull();
   });
 
   it('opens rules from the home screen and can close them', async () => {

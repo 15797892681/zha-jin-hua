@@ -83,9 +83,9 @@ export function GameTable({
           <span className={`connection-pill is-${connectionState}`}>{connectionState === 'online' ? '牌桌顺畅' : '正在重连'}</span>
         </div>
       </header>
+      {aiNotice && <p className="ai-notice" role="status">{aiNotice}</p>}
       <section className="felt-table" aria-label="炸金花牌桌">
         <div className="table-ring" aria-hidden="true" />
-        {aiNotice && <p className="ai-notice" role="status">{aiNotice}</p>}
         <div className="pot-display">
           <span>底池</span>
           <strong>{view.pot}</strong>
