@@ -1,0 +1,25 @@
+zha-jin-hua/tests/ai.test.ts
+  s_c49402a7cc7736::t_0238345bc6946f 71,74,79,82-84,86-90
+  s_c49402a7cc7736::t_dd632a9ef11a8e 107-122
+zha-jin-hua/tests/ai-decision-service.test.ts
+  s_c49402a7cc7736::t_dd632a9ef11a8e 4,57-86
+  s_c49402a7cc7736::t_591b32f3398fe7 87-88
+zha-jin-hua/src/ai/strategy.ts
+  s_c49402a7cc7736::t_8afc9e1bd9d581 1-2,4-5,16-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "bb593a806c7367b9b9215c606453df85491c43a1",
+  "prompts": {},
+  "sessions": {
+    "s_c49402a7cc7736": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f604c-6c72-7a32-b3d7-e4c450534d24",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "linruibiao <linruibiao@codemao.cn>"
+    }
+  }
+}
