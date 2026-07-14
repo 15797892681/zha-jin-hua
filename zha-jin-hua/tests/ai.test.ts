@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { PublicMemoryEntry } from '../src/ai/contracts';
 import { chooseAiAction, type AiStyle } from '../src/ai/strategy';
 import { applyAction, createGame } from '../src/shared/game';
 import type { Card, GameState, Rank, Suit } from '../src/shared/types';
@@ -50,6 +51,49 @@ describe('chooseAiAction', () => {
     state.baseBet = 50;
 
     expect(chooseAiAction(state, 'bot', 'cautious', () => 0).type).toBe('fold');
+  });
+
+  it('does not make the cautious AI reveal every blind hand', () => {
+    const action = chooseAiAction(fixture(), 'bot', 'cautious', () => 0.9);
+
+    expect(action.type).toBe('call');
+  });
+
+  it('compares instead of folding a viewed triple when the raise ceiling is reached', () => {
+    const state = fixture('AS AH AD');
+    state.players[0].hasLooked = true;
+    state.baseBet = 200;
+    state.lastAction = { type: 'raise', playerId: 'p3', amount: 200 };
+
+    expect(chooseAiAction(state, 'bot', 'cautious', () => 0).type).toBe('compare');
+  });
+
+  it('distinguishes a strong high-card hand from a weak one under the same pressure', () => {
+    const strong = fixture('AS KH 9D');
+    strong.players[0].hasLooked = true;
+    strong.baseBet = 20;
+    strong.lastAction = { type: 'raise', playerId: 'p3', amount: 20 };
+    const weak = fixture('2S 7H 9D');
+    weak.players[0].hasLooked = true;
+    weak.baseBet = 20;
+    weak.lastAction = { type: 'raise', playerId: 'p3', amount: 20 };
+
+    expect(chooseAiAction(strong, 'bot', 'cautious', () => 0).type).toBe('call');
+    expect(chooseAiAction(weak, 'bot', 'cautious', () => 0).type).toBe('fold');
+  });
+
+  it('remembers an opponent raise after looking and challenges with a competitive hand', () => {
+    const state = fixture('AS AH 2D');
+    state.players[0].hasLooked = true;
+    state.baseBet = 200;
+    state.actionCount = state.players.length * 2;
+    state.lastAction = { type: 'look', playerId: 'bot' };
+    const memory: PublicMemoryEntry[] = [
+      { kind: 'action', actorId: 'p3', action: 'raise', amount: 200 },
+      { kind: 'action', actorId: 'bot', action: 'look' },
+    ];
+
+    expect(chooseAiAction(state, 'bot', 'cautious', () => 0, memory).type).toBe('compare');
   });
 
   it('is reproducible when supplied the same random source', () => {

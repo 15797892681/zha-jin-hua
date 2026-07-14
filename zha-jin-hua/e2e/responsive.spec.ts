@@ -110,6 +110,22 @@ test('the game table fits a phone viewport without horizontal overflow', async (
   await page.screenshot({ path: testInfo.outputPath('mobile-table.png'), fullPage: true });
 });
 
+test('the human hand fully spreads after looking on a phone viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.getByRole('button', { name: '单机对战' }).click();
+  await page.getByRole('button', { name: '看牌' }).click();
+
+  const cards = page.locator('.player-seat.is-self .playing-card.is-face-up');
+  await expect(cards).toHaveCount(3);
+  const boxes = await cards.evaluateAll((elements) => elements.map((element) => {
+    const box = element.getBoundingClientRect();
+    return { left: box.left, right: box.right };
+  }));
+  expect(boxes[0].right).toBeLessThanOrEqual(boxes[1].left);
+  expect(boxes[1].right).toBeLessThanOrEqual(boxes[2].left);
+});
+
 test('long AI dialogue fits a phone viewport without horizontal overflow', async ({ page }) => {
   const dialogue = '天地玄黄宇宙洪荒日月盈昃辰宿列张寒来暑往秋收冬藏闰余成岁律吕调阳云腾致雨露结为霜';
   expect([...dialogue]).toHaveLength(40);

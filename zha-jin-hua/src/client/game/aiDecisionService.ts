@@ -92,7 +92,7 @@ export function createAiDecisionService(options: Options = {}): AiDecisionServic
         const lines = FALLBACK_DIALOGUE[style];
 
         return {
-          action: chooseAiAction(state, playerId, style, random),
+          action: chooseAiAction(state, playerId, style, random, memory),
           dialogue: lines[Math.min(lines.length - 1, Math.floor(random() * lines.length))],
           source: 'rule',
           fallbackReason,

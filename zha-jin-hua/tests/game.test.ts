@@ -77,12 +77,14 @@ describe('applyAction', () => {
 
   it('raises only to an allowed table level and charges the viewed multiplier', () => {
     let state = createGame(config());
+    expect(legalActions(state, 'p1').raiseAmounts).toEqual([20]);
     state = applyAction(state, { type: 'look', playerId: 'p1', turnId: state.turnId });
     const raised = applyAction(state, { type: 'raise', playerId: 'p1', amount: 20, turnId: state.turnId });
 
     expect(raised.baseBet).toBe(20);
     expect(raised.players[0].chips).toBe(950);
     expect(raised.pot).toBe(80);
+    expect(legalActions(raised, 'p2').raiseAmounts).toEqual([50]);
     expect(() => applyAction(createGame(config()), {
       type: 'raise',
       playerId: 'p1',

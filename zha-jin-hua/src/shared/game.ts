@@ -149,9 +149,10 @@ export function legalActions(state: GameState, playerId: string): LegalActions {
   const multiplier = player.hasLooked ? 2 : 1;
   const rawCallCost = state.baseBet * multiplier;
   const callCost = player.chips >= rawCallCost ? rawCallCost : null;
-  const raiseAmounts = RAISE_LEVELS.filter((amount) => (
-    amount > state.baseBet && player.chips >= amount * multiplier
-  ));
+  const nextRaise = RAISE_LEVELS.find((amount) => amount > state.baseBet);
+  const raiseAmounts = nextRaise !== undefined && player.chips >= nextRaise * multiplier
+    ? [nextRaise]
+    : [];
   const rawCompareCost = rawCallCost * 2;
   const compareCost = player.chips >= rawCompareCost ? rawCompareCost : null;
   const compareTargets = compareCost === null

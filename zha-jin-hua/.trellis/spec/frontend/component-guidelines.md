@@ -88,3 +88,8 @@ to use the shared dimmed and blurred dialog backdrop.
 - For anchored popover regressions, test desktop, phone portrait, and phone
   landscape layouts. Assert that every action is in the viewport, the panel is
   above its anchor, and opening it does not add document or panel scrolling.
+- Do not reuse the compact face-down overlap for the human player's revealed
+  hand. On phone portrait, `.player-seat.is-self .playing-card.is-face-up`
+  cards must have non-overlapping bounding boxes so every rank and suit remains
+  readable. Cover this with a real-browser bounding-box assertion because
+  JSDOM does not calculate CSS layout.

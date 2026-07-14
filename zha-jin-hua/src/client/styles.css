@@ -198,6 +198,8 @@ button { -webkit-tap-highlight-color: transparent; }
   transform-origin: bottom center;
 }
 .playing-card:first-child { margin-left: 0; }
+.player-seat.is-self .playing-card.is-face-up { margin-left: 6px; }
+.player-seat.is-self .playing-card.is-face-up:first-child { margin-left: 0; }
 .playing-card.is-face-down { display: grid; place-items: center; padding: 3px; color: var(--gold-soft); background: var(--cinnabar); border: 3px solid var(--ivory); }
 .playing-card.is-face-down::before { content: ''; position: absolute; inset: 3px; border: 1px solid rgba(246, 240, 223, .55); }
 .playing-card.is-red { color: var(--cinnabar); }
