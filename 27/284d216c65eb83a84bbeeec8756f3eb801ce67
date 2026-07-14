@@ -1,0 +1,20 @@
+zha-jin-hua/docs/superpowers/specs/2026-07-14-deepseek-solo-ai-design.md
+  s_ba9c66153bd67c::t_a6a8b862e8a18f 98,119,121,158,178,195,197,325
+  s_ba9c66153bd67c::t_bde3cf67f8e6d7 1-97,99-118,120,122-157,159-177,179-194,196,198-324,326-383
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "27284d216c65eb83a84bbeeec8756f3eb801ce67",
+  "prompts": {},
+  "sessions": {
+    "s_ba9c66153bd67c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f5a79-a8f1-7f90-8210-dbd8d97a9a15",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "linruibiao <linruibiao@codemao.cn>"
+    }
+  }
+}
