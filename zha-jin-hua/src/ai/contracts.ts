@@ -6,6 +6,7 @@ export const AI_STYLES = ['cautious', 'bold', 'chaotic'] as const;
 export type AiStyle = (typeof AI_STYLES)[number];
 
 const idSchema = z.string().min(1).max(64);
+const requestIdSchema = z.string().min(1).max(64).regex(/^[A-Za-z0-9._~-]+$/);
 const amountSchema = z.number().int().nonnegative().finite();
 const dialogueSchema = z.string()
   .min(1)
@@ -40,7 +41,7 @@ const legalActionsSchema = z.object({
 export type AiLegalActions = z.infer<typeof legalActionsSchema>;
 
 export const aiDecisionRequestSchema = z.object({
-  requestId: idSchema,
+  requestId: requestIdSchema,
   turnId: z.number().int().positive(),
   playerId: idSchema,
   style: z.enum(AI_STYLES),
@@ -90,7 +91,7 @@ const gameActionSchema = z.discriminatedUnion('type', [
 ]);
 
 export const aiDecisionResponseSchema = z.object({
-  requestId: idSchema, turnId: z.number().int().positive(), playerId: idSchema,
+  requestId: requestIdSchema, turnId: z.number().int().positive(), playerId: idSchema,
   action: gameActionSchema, dialogue: dialogueSchema,
 }).strict();
 export type AiDecisionResponse = z.infer<typeof aiDecisionResponseSchema>;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  aiDecisionRequestSchema,
   aiDecisionResponseSchema,
   deepSeekDecisionSchema,
   intentToGameAction,
@@ -39,6 +40,16 @@ function fixture(hasLooked = false): GameState {
 }
 
 describe('AI request contract', () => {
+  it('accepts token request IDs and rejects whitespace, controls, and Unicode', () => {
+    const request = buildAiDecisionRequest(fixture(false), 'bot', 'cautious', [], 'req-http');
+
+    expect(aiDecisionRequestSchema.safeParse(request).success).toBe(true);
+    for (const requestId of ['req http', 'req-http\nforged', 'req-http\u0000', '请求-1']) {
+      expect(aiDecisionRequestSchema.safeParse({ ...request, requestId }).success, requestId)
+        .toBe(false);
+    }
+  });
+
   it('redacts the deck, every opponent hand, and an unviewed bot hand', () => {
     const request = buildAiDecisionRequest(fixture(false), 'bot', 'cautious', [], 'req-1');
     expect(request.self.cards).toBeNull();

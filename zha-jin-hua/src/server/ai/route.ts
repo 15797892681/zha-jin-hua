@@ -43,19 +43,32 @@ export function createAiDecisionRouter(options: RouteOptions = {}): Router {
     const decisionRequest = parsed.data;
     const ip = request.ip || request.socket.remoteAddress || 'unknown';
     if (!config.enabled || !gateway) return response.status(503).json({ code: 'AI_DISABLED' });
-    if (
-      !limiter.take('global', config.globalPerHour, 3_600_000)
-      || !limiter.take(`ip:${ip}`, config.perIpPerMinute, 60_000)
-    ) {
+    if (!limiter.takeAll([
+      { key: 'global', limit: config.globalPerHour, windowMs: 3_600_000 },
+      { key: `ip:${ip}`, limit: config.perIpPerMinute, windowMs: 60_000 },
+    ])) {
       return response.status(429).json({ code: 'AI_RATE_LIMITED' });
     }
     if (!breaker.canRequest()) return response.status(503).json({ code: 'AI_CIRCUIT_OPEN' });
 
-    const signal = AbortSignal.timeout(config.timeoutMs);
+    const clientAbort = new AbortController();
+    const abortForDisconnect = () => {
+      if (!clientAbort.signal.aborted) {
+        clientAbort.abort(new DOMException('Client disconnected', 'AbortError'));
+      }
+    };
+    request.once('aborted', abortForDisconnect);
+    response.once('close', abortForDisconnect);
+    const timeoutSignal = AbortSignal.timeout(config.timeoutMs);
+    const signal = AbortSignal.any([timeoutSignal, clientAbort.signal]);
     let result: DeepSeekResult;
     try {
       result = await gateway.decide(decisionRequest, signal);
     } catch (error) {
+      if (clientAbort.signal.aborted) {
+        breaker.cancel();
+        return;
+      }
       breaker.failure();
       const timedOut = error instanceof DOMException && error.name === 'TimeoutError';
       bestEffort(() => {
@@ -69,8 +82,15 @@ export function createAiDecisionRouter(options: RouteOptions = {}): Router {
       return response.status(timedOut ? 504 : 502).json({
         code: timedOut ? 'AI_TIMEOUT' : 'AI_PROVIDER_ERROR',
       });
+    } finally {
+      request.off('aborted', abortForDisconnect);
+      response.off('close', abortForDisconnect);
     }
 
+    if (clientAbort.signal.aborted || response.destroyed) {
+      breaker.cancel();
+      return;
+    }
     breaker.success();
     const action = intentToGameAction(result.decision.action, decisionRequest);
     bestEffort(() => {

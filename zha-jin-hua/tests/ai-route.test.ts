@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { request as httpRequest } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -92,6 +93,16 @@ describe('AI decision route', () => {
     expect(gateway.decide).not.toHaveBeenCalled();
   });
 
+  it('rejects a control character in the request ID before gateway invocation', async () => {
+    const gateway: DeepSeekGateway = { decide: vi.fn() };
+    const { url } = await start(gateway);
+
+    const response = await post(url, { ...body(), requestId: 'req-http\nforged' });
+
+    expect(response.status).toBe(400);
+    expect(gateway.decide).not.toHaveBeenCalled();
+  });
+
   it('returns 429 after the per-IP limit', async () => {
     const gateway: DeepSeekGateway = { decide: vi.fn().mockResolvedValue(foldResult()) };
     const { url } = await start(gateway, { AI_MAX_REQUESTS_PER_MINUTE_PER_IP: '1' });
@@ -135,6 +146,27 @@ describe('AI decision route', () => {
     expect(limiter.sizeForTesting).toBe(2);
   });
 
+  it('commits per-IP and global rate limits atomically', async () => {
+    const gateway: DeepSeekGateway = { decide: vi.fn().mockResolvedValue(foldResult()) };
+    const limiter = new FixedWindowLimiter();
+    const { url } = await start(
+      gateway,
+      {
+        AI_MAX_REQUESTS_PER_MINUTE_PER_IP: '1',
+        AI_MAX_REQUESTS_PER_HOUR: '2',
+      },
+      undefined,
+      { limiter },
+    );
+
+    expect((await post(url, body(), '198.51.100.1')).status).toBe(200);
+    expect((await post(url, body(), '198.51.100.1')).status).toBe(429);
+    expect((await post(url, body(), '198.51.100.2')).status).toBe(200);
+    expect((await post(url, body(), '198.51.100.3')).status).toBe(429);
+    expect(limiter.sizeForTesting).toBe(3);
+    expect(gateway.decide).toHaveBeenCalledTimes(2);
+  });
+
   it('rejects JSON bodies larger than 16 KB before calling the gateway', async () => {
     const gateway: DeepSeekGateway = { decide: vi.fn() };
     const { url } = await start(gateway);
@@ -156,6 +188,41 @@ describe('AI decision route', () => {
     const response = await post(url);
 
     expect(response.status).toBe(504);
+  });
+
+  it('aborts the gateway when the HTTP caller disconnects without opening the circuit', async () => {
+    let aborted!: (reason: unknown) => void;
+    let gatewayCalls = 0;
+    const gatewayAborted = new Promise<unknown>((resolve) => { aborted = resolve; });
+    const gateway: DeepSeekGateway = {
+      decide: vi.fn((_request: AiDecisionRequest, signal: AbortSignal) => {
+        gatewayCalls += 1;
+        if (gatewayCalls > 1) return Promise.resolve(foldResult());
+        return new Promise<never>((_resolve, reject) => {
+          signal.addEventListener('abort', () => {
+            aborted(signal.reason);
+            reject(signal.reason);
+          }, { once: true });
+        });
+      }),
+    };
+    const { url } = await start(gateway, {
+      AI_CIRCUIT_BREAKER_FAILURES: '1',
+      AI_TIMEOUT_MS: '10000',
+    });
+    const caller = httpRequest(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+    });
+    caller.on('error', () => undefined);
+    caller.end(JSON.stringify(body()));
+    await vi.waitFor(() => expect(gateway.decide).toHaveBeenCalledOnce());
+
+    caller.destroy();
+
+    await expect(gatewayAborted).resolves.toMatchObject({ name: 'AbortError' });
+    expect((await post(url)).status).toBe(200);
+    expect(gateway.decide).toHaveBeenCalledTimes(2);
   });
 
   it('returns 502 for three provider failures then opens without a fourth call', async () => {

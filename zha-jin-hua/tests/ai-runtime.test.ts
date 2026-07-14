@@ -51,6 +51,20 @@ describe('AI runtime protection', () => {
     expect(limiter.sizeForTesting).toBe(1);
   });
 
+  it('checks and commits composite limits atomically', () => {
+    const limiter = new FixedWindowLimiter();
+    const take = (ip: string) => limiter.takeAll([
+      { key: 'global', limit: 2, windowMs: 3_600_000 },
+      { key: `ip:${ip}`, limit: 1, windowMs: 60_000 },
+    ]);
+
+    expect(take('a')).toBe(true);
+    expect(take('a')).toBe(false);
+    expect(take('b')).toBe(true);
+    expect(take('c')).toBe(false);
+    expect(limiter.sizeForTesting).toBe(3);
+  });
+
   it('opens after three failures and permits only one probe after cooldown', () => {
     let now = 1000;
     const breaker = new CircuitBreaker(3, 30_000, () => now);
@@ -62,6 +76,17 @@ describe('AI runtime protection', () => {
     expect(breaker.canRequest()).toBe(true);
     expect(breaker.canRequest()).toBe(false);
     breaker.success();
+    expect(breaker.canRequest()).toBe(true);
+  });
+
+  it('releases a half-open probe after caller cancellation without recording a failure', () => {
+    let now = 1000;
+    const breaker = new CircuitBreaker(1, 30_000, () => now);
+    breaker.failure();
+    now += 30_001;
+
+    expect(breaker.canRequest()).toBe(true);
+    breaker.cancel();
     expect(breaker.canRequest()).toBe(true);
   });
 });

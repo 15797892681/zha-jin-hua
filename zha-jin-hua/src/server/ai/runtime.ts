@@ -41,15 +41,26 @@ export class FixedWindowLimiter {
   }
 
   take(key: string, limit: number, windowMs: number): boolean {
+    return this.takeAll([{ key, limit, windowMs }]);
+  }
+
+  takeAll(limits: ReadonlyArray<{ key: string; limit: number; windowMs: number }>): boolean {
     const current = this.now();
     this.prune(current);
-    const window = this.windows.get(key);
-    if (!window) {
-      this.windows.set(key, { expiresAt: current + windowMs, count: 1 });
-      return true;
+
+    for (const { key, limit } of limits) {
+      const window = this.windows.get(key);
+      if (window && window.count >= limit) return false;
     }
-    if (window.count >= limit) return false;
-    window.count += 1;
+
+    for (const { key, windowMs } of limits) {
+      const window = this.windows.get(key);
+      if (window) {
+        window.count += 1;
+      } else {
+        this.windows.set(key, { expiresAt: current + windowMs, count: 1 });
+      }
+    }
     return true;
   }
 
@@ -88,5 +99,9 @@ export class CircuitBreaker {
     this.failures += 1;
     this.probeInFlight = false;
     if (this.failures >= this.threshold) this.openUntil = this.now() + this.cooldownMs;
+  }
+
+  cancel(): void {
+    this.probeInFlight = false;
   }
 }
