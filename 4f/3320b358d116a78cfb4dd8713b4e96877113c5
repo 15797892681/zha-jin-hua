@@ -1,0 +1,32 @@
+zha-jin-hua/src/server/ai/runtime.ts
+  s_ba9c66153bd67c::t_afedc0fcee683c 44-47,50-62,103-106
+zha-jin-hua/tests/ai-route.test.ts
+  s_ba9c66153bd67c::t_927179311dad3f 195,199-200
+  s_ba9c66153bd67c::t_33078f4de12c0a 209-212,223
+  s_ba9c66153bd67c::t_f145b5b7f4d0f2 3,96-105,149-169,193-194,196-198,201-208,213-222,224-226
+  s_ba9c66153bd67c::t_3a5d49f10b2a10 227
+zha-jin-hua/src/ai/contracts.ts
+  s_ba9c66153bd67c::t_afedc0fcee683c 9,44,94
+zha-jin-hua/tests/ai-runtime.test.ts
+  s_ba9c66153bd67c::t_f145b5b7f4d0f2 54-67,81-91
+zha-jin-hua/src/server/ai/route.ts
+  s_ba9c66153bd67c::t_afedc0fcee683c 46-49,54-63,68-71,85-87,90-93
+zha-jin-hua/tests/ai-context.test.ts
+  s_ba9c66153bd67c::t_f145b5b7f4d0f2 4,43-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "4f3320b358d116a78cfb4dd8713b4e96877113c5",
+  "prompts": {},
+  "sessions": {
+    "s_ba9c66153bd67c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f5a79-a8f1-7f90-8210-dbd8d97a9a15",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "linruibiao <linruibiao@codemao.cn>"
+    }
+  }
+}
