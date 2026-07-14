@@ -1,0 +1,29 @@
+zha-jin-hua/src/client/game/SoloMode.tsx
+  s_ba9c66153bd67c::t_222477aa5d5d2e 23-25
+zha-jin-hua/src/client/components/GameTable.tsx
+  s_ba9c66153bd67c::t_222477aa5d5d2e 19-21,49-51,88,117-118
+zha-jin-hua/src/client/styles.css
+  s_ba9c66153bd67c::t_222477aa5d5d2e 134-168,314-316
+zha-jin-hua/src/client/components/PlayerSeat.tsx
+  s_ba9c66153bd67c::t_222477aa5d5d2e 10-11,20-28,36-40
+zha-jin-hua/tests/solo-ui.test.tsx
+  s_ba9c66153bd67c::t_3d6eeb60142963 37-40,42-43,46-66,69-74
+  s_ba9c66153bd67c::t_908a8dc6079a35 41
+  s_ba9c66153bd67c::t_b99d782f035d40 44-45,67-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "faf4fd0ea593d90fdf467d88b5ba387be9c0ecbc",
+  "prompts": {},
+  "sessions": {
+    "s_ba9c66153bd67c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f5a79-a8f1-7f90-8210-dbd8d97a9a15",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "linruibiao <linruibiao@codemao.cn>"
+    }
+  }
+}
